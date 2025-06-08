@@ -1,6 +1,3 @@
-// 
-
-
 
 const cloudinary = require('cloudinary').v2;
 require('dotenv').config(); // Đảm bảo dòng này có ở đầu file

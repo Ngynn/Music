@@ -1,0 +1,30 @@
+# Node.js
+node_modules/
+dist/
+build/
+
+# Environment files
+*.env
+**/.env
+*.env.*
+**/.env.*
+
+# Firebase secrets - backend service account key JSON (tùy tên file, có thể thay đổi)
+**/musicapp-*-firebase-adminsdk-*.json
+**/serviceAccountKey.json
+**/google-services.json
+**/GoogleService-Info.plist
+
+# Firebase configs (frontend)
+firebase.json
+.firebaserc
+firebase-debug.log
+
+# Editor / System
+.vscode/
+.idea/
+.DS_Store
+
+# Expo
+.expo/
+.expo-shared/

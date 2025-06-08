@@ -1,0 +1,106 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+app-example
+
+
+# Firebase and Google Cloud credentials
+*-firebase-adminsdk-*.json
+*.key.json
+*.credentials.json
+/service-account*.json
+/google-services.json
+/google-services-dev.json
+/GoogleService-Info.plist
+
+# API keys and secrets
+secrets/
+keys/
+config/credentials*.json
+
+# Bổ sung thêm cho Firebase
+.firebase/
+firestore-debug.log
+firestore.indexes.json
+firestore.rules
+
+# Bổ sung cho React Native/Expo
+.expo-shared/
+.expo/
+web-build/
+dist/
+*.expo.*
+
+# Bổ sung cho Android
+android/app/debug/
+android/app/release/
+android/app/build/
+*.apk
+*.aab
+*.keystore
+
+# Bổ sung cho iOS
+ios/build/
+Pods/
+Podfile.lock
+*.xcworkspace
+
+# Bổ sung cho testing
+coverage/
+jest*.config.js
+__snapshots__/
+
+# Bổ sung cho IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# Bổ sung cho hệ thống
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+
+# Bổ sung cho cache
+.cache/
+.temp/
+.tmp/
+*.tmp
+*.bak

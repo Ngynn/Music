@@ -62,14 +62,22 @@ export default function Home() {
   const [songs, setSongs] = useState<Song[]>([]);
   const [sortedSongs, setSortedSongs] = useState<Song[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [sortOption, setSortOption] = useState<string>("name");
+  const [sortOption, setSortOption] = useState<string>("name_asc"); // Mặc định A-Z
   const [loading, setLoading] = useState(true);
   const [miniPlayerHeight, setMiniPlayerHeight] = useState(0);
   const [showSongOptions, setShowSongOptions] = useState<string | null>(null);
   const [userPlaylists, setUserPlaylists] = useState<any[]>([]);
-  const [loadingPlaylists, setLoadingPlaylists] = useState(false); // Trạng thái loading cho playlist
+  const [loadingPlaylists, setLoadingPlaylists] = useState(false);
   const [showMenuOptions, setShowMenuOptions] = useState(false);
   const [selectedSongForMenu, setSelectedSongForMenu] = useState<any>(null);
+
+  // ✅ GIỮ LẠI: Sort directions state (bản đầy đủ)
+  const [sortDirections, setSortDirections] = useState({
+    name: "asc" as "asc" | "desc",
+    artist: "asc" as "asc" | "desc",
+    views: "desc" as "asc" | "desc", // Views mặc định từ cao xuống thấp
+  });
+
   const router = useRouter();
   const flatListRef = useRef<FlatList>(null);
   const { prompt, confirm, success, error } = useAlert();
@@ -107,9 +115,13 @@ export default function Home() {
         id: doc.id,
         ...(doc.data() as Song),
       }));
+
+      // ✅ THÊM: Sort mặc định theo tên A-Z
+      const sortedData = [...data].sort((a, b) => a.name.localeCompare(b.name));
+
       setSongs(data);
-      setSortedSongs(data);
-      setCurrentSongList(data);
+      setSortedSongs(sortedData);
+      setCurrentSongList(sortedData);
     } catch (error) {
       console.error("Lỗi khi lấy bài hát từ Firestore:", error);
     } finally {
@@ -296,36 +308,110 @@ export default function Home() {
     }
   };
 
-  const sortSongs = (option: string) => {
+  // ✅ XÓA: Duplicate declaration này
+  // const [sortDirections, setSortDirections] = useState({
+  //   name: "asc", // 'asc' | 'desc'
+  //   artist: "asc",
+  //   views: "desc", // Views mặc định từ cao xuống thấp
+  // });
+
+  // ✅ CẬP NHẬT: Sort function với explicit typing
+  const sortSongs = (type: string) => {
     let sorted = [...songs];
-    if (option === "name") {
-      sorted.sort((a, b) => a.name.localeCompare(b.name));
-    } else if (option === "artist") {
-      sorted.sort((a, b) => a.artist.localeCompare(b.artist));
+    let newDirection: "asc" | "desc"; // ✅ THÊM: Explicit type annotation
+
+    if (type === "name") {
+      // Toggle direction cho name
+      newDirection = sortDirections.name === "asc" ? "desc" : "asc";
+      if (newDirection === "asc") {
+        sorted.sort((a, b) => a.name.localeCompare(b.name));
+      } else {
+        sorted.sort((a, b) => b.name.localeCompare(a.name));
+      }
+      setSortDirections((prev) => ({ ...prev, name: newDirection }));
+    } else if (type === "artist") {
+      // Toggle direction cho artist
+      newDirection = sortDirections.artist === "asc" ? "desc" : "asc";
+      if (newDirection === "asc") {
+        sorted.sort((a, b) => a.artist.localeCompare(b.artist));
+      } else {
+        sorted.sort((a, b) => b.artist.localeCompare(a.artist));
+      }
+      setSortDirections((prev) => ({ ...prev, artist: newDirection }));
+    } else if (type === "views") {
+      // Toggle direction cho views
+      newDirection = sortDirections.views === "desc" ? "asc" : "desc";
+      if (newDirection === "desc") {
+        sorted.sort((a, b) => (b.views || 0) - (a.views || 0));
+      } else {
+        sorted.sort((a, b) => (a.views || 0) - (b.views || 0));
+      }
+      setSortDirections((prev) => ({ ...prev, views: newDirection }));
+    } else {
+      // ✅ THÊM: Default case để handle unknown type
+      console.warn(`Unknown sort type: ${type}`);
+      return; // Early return để tránh lỗi
     }
+
     setSortedSongs(sorted);
-    setSortOption(option);
+    setSortOption(`${type}_${newDirection}`);
+    setCurrentSongList(sorted);
+
+    // ✅ THÔNG BÁO NGẮN GỌN
+    const getDirectionText = (dir: "asc" | "desc") =>
+      dir === "asc" ? "A→Z" : "Z→A";
+    const getViewsDirectionText = (dir: "asc" | "desc") =>
+      dir === "desc" ? "Cao→Thấp" : "Thấp→Cao";
+
+    const messages: { [key: string]: string } = {
+      name: `Tên ${getDirectionText(newDirection)}`,
+      artist: `Nghệ sĩ ${getDirectionText(newDirection)}`,
+      views: `Lượt xem ${getViewsDirectionText(newDirection)}`,
+    };
+
+    success("Đã sắp xếp", messages[type] || "Đã sắp xếp");
   };
 
+  // ✅ CẬP NHẬT: Simplified sort options với toggle
   const showSortOptions = () => {
+    const getNextDirection = (type: string, current: string) => {
+      if (type === "views") {
+        return current === "desc" ? "asc" : "desc";
+      }
+      return current === "asc" ? "desc" : "asc";
+    };
+
+    const getDirectionIcon = (type: string, direction: string) => {
+      if (type === "views") {
+        return direction === "desc" ? "↓" : "↑";
+      }
+      return direction === "asc" ? "↑" : "↓";
+    };
+
     prompt("Sắp xếp bài hát", "Chọn cách sắp xếp:", [
       {
-        text: "Theo tên bài hát",
-        icon: "sort-by-alpha",
+        text: `🎵 Tên ${getDirectionIcon(
+          "name",
+          getNextDirection("name", sortDirections.name)
+        )}`,
         onPress: () => sortSongs("name"),
       },
       {
-        text: "Theo nghệ sĩ",
-        icon: "person",
+        text: `🎤 Nghệ sĩ ${getDirectionIcon(
+          "artist",
+          getNextDirection("artist", sortDirections.artist)
+        )}`,
         onPress: () => sortSongs("artist"),
       },
       {
-        text: "Theo lượt xem",
-        icon: "visibility",
+        text: `👁️ Lượt xem ${getDirectionIcon(
+          "views",
+          getNextDirection("views", sortDirections.views)
+        )}`,
         onPress: () => sortSongs("views"),
       },
       {
-        text: "Hủy",
+        text: "❌ Hủy",
         style: "cancel",
       },
     ]);

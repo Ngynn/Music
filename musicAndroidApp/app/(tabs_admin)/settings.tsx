@@ -128,55 +128,10 @@ const SettingsScreen = () => {
           </View>
         </View>
 
-        {/* General Settings */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Cài đặt chung</Text>
-
-          <View style={styles.settingItem}>
-            <View style={styles.settingItemLeft}>
-              <Icon name="notifications" size={24} color={COLORS.text} />
-              <Text style={styles.settingItemText}>Thông báo</Text>
-            </View>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={handleNotificationToggle}
-              trackColor={{ false: "#767577", true: `${COLORS.primary}80` }}
-              thumbColor={notificationsEnabled ? COLORS.primary : "#f4f3f4"}
-              ios_backgroundColor="#3e3e3e"
-            />
-          </View>
-
-          <View style={styles.settingItem}>
-            <View style={styles.settingItemLeft}>
-              <Icon name="nightlight-round" size={24} color={COLORS.text} />
-              <Text style={styles.settingItemText}>Chế độ tối</Text>
-            </View>
-            <Switch
-              value={darkModeEnabled}
-              onValueChange={handleDarkModeToggle}
-              trackColor={{ false: "#767577", true: `${COLORS.primary}80` }}
-              thumbColor={darkModeEnabled ? COLORS.primary : "#f4f3f4"}
-              ios_backgroundColor="#3e3e3e"
-            />
-          </View>
-        </View>
-
         {/* Admin Settings */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quản trị viên</Text>
-
-          {/* <TouchableOpacity
-            style={styles.settingItem}
-            onPress={() => router.push("/screens/adminStats")}
-          >
-            <View style={styles.settingItemLeft}>
-              <Icon name="bar-chart" size={24} color={COLORS.text} />
-              <Text style={styles.settingItemText}>Thống kê hệ thống</Text>
-            </View>
-            <Icon name="chevron-right" size={24} color={COLORS.textSecondary} />
-          </TouchableOpacity> */}
-
-          {/* <TouchableOpacity
+          <TouchableOpacity
             style={styles.settingItem}
             onPress={() => router.push("/screens/adminUsers")}
           >
@@ -185,34 +140,12 @@ const SettingsScreen = () => {
               <Text style={styles.settingItemText}>Quản lý người dùng</Text>
             </View>
             <Icon name="chevron-right" size={24} color={COLORS.textSecondary} />
-          </TouchableOpacity> */}
-
-          {/* <TouchableOpacity
-            style={styles.settingItem}
-            onPress={() => router.push("/screens/adminBackup")}
-          >
-            <View style={styles.settingItemLeft}>
-              <Icon name="backup" size={24} color={COLORS.text} />
-              <Text style={styles.settingItemText}>Sao lưu dữ liệu</Text>
-            </View>
-            <Icon name="chevron-right" size={24} color={COLORS.textSecondary} />
-          </TouchableOpacity> */}
+          </TouchableOpacity>
         </View>
 
         {/* Account Settings */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Tài khoản</Text>
-
-          {/* <TouchableOpacity
-            style={styles.settingItem}
-            onPress={() => router.push("/screens/changePassword")}
-          >
-            <View style={styles.settingItemLeft}>
-              <Icon name="lock" size={24} color={COLORS.text} />
-              <Text style={styles.settingItemText}>Đổi mật khẩu</Text>
-            </View>
-            <Icon name="chevron-right" size={24} color={COLORS.textSecondary} />
-          </TouchableOpacity> */}
 
           <TouchableOpacity
             style={[styles.settingItem, styles.logoutItem]}
@@ -238,7 +171,7 @@ const SettingsScreen = () => {
 
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Bản quyền</Text>
-            <Text style={styles.infoValue}>© 2023 Music App</Text>
+            <Text style={styles.infoValue}>© 2025 Music App</Text>
           </View>
         </View>
       </ScrollView>

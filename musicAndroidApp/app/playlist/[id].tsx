@@ -535,19 +535,6 @@ export default function PlaylistDetails() {
           />
         </TouchableOpacity>
 
-        {/* ✅ QUICK ADD TO PLAYLIST BUTTON - SỬ DỤNG MENUOPTIONS */}
-        {/* <TouchableOpacity
-          style={styles.actionIcon}
-          onPress={(e) => {
-            e.stopPropagation();
-            if (item.song) {
-              openMenuOptions(item.song);
-            }
-          }}
-        >
-          <Icon name="playlist-add" size={20} color={COLORS.textSecondary} />
-        </TouchableOpacity> */}
-
         {/* Menu Button */}
         <TouchableOpacity
           style={styles.menuButton}

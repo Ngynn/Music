@@ -57,6 +57,7 @@ export default function Account() {
 
   const router = useRouter();
 
+  // dang xuat
   const handleSignOut = async () => {
     confirm(
       "Xác nhận đăng xuất",
@@ -74,6 +75,8 @@ export default function Account() {
     );
   };
 
+
+  // xem thong tin tai khoan
   const handleViewProfile = () => {
     if (!userData) {
       error("Thông báo", "Không có thông tin người dùng để hiển thị.");
@@ -86,6 +89,8 @@ export default function Account() {
     );
   };
 
+
+  // lay thong tin user 
   const fetchUserData = async () => {
     if (!auth.currentUser) return;
 
@@ -107,6 +112,8 @@ export default function Account() {
     }
   };
 
+
+  // kich hoat modal doi mat khau
   const handleChangePassword = () => {
     if (!auth.currentUser || !auth.currentUser.email) {
       error("Lỗi", "Vui lòng đăng nhập lại để thực hiện chức năng này");
@@ -116,9 +123,10 @@ export default function Account() {
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
-    setPasswordModalVisible(true);
+    setPasswordModalVisible(true); // modal day ne
   };
 
+  // đổi mật khẩu
   const changePassword = async () => {
     if (newPassword.length < 6) {
       error("Lỗi", "Mật khẩu mới phải có ít nhất 6 ký tự");
@@ -169,6 +177,7 @@ export default function Account() {
     }
   };
 
+  // kich hoat modal about me
   const handleAboutMe = () => {
     setAboutModalVisible(true);
   };
@@ -179,6 +188,7 @@ export default function Account() {
     }, [])
   );
 
+  // render modal doi password
   const renderPasswordModal = () => (
     <Modal
       visible={passwordModalVisible}
@@ -304,6 +314,7 @@ export default function Account() {
     </Modal>
   );
 
+  // render modal about me
   const renderAboutModal = () => (
     <Modal
       visible={aboutModalVisible}

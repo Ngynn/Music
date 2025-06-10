@@ -89,6 +89,7 @@ export default function Rank() {
   //   fetchRankings();
   // }, []);
 
+  // chỉnh sửa useFocusEffect để gọi fetchRankings
   useFocusEffect(
     React.useCallback(() => {
       fetchRankings();
@@ -98,10 +99,11 @@ export default function Rank() {
     }, [])
   );
 
+  // lay bai hat the theo like va view
   const fetchRankings = async () => {
     setLoading(true);
     try {
-      // Lấy bài hát theo lượt thích - Sửa lại cách truy vấn
+      // Lấy bài hát theo lượt thích 
       const likeQuery = query(
         collection(db, "song"),
         orderBy("likes", "desc"),
@@ -126,7 +128,7 @@ export default function Rank() {
       // console.log("Songs by likes:", likeData); // Debug để kiểm tra dữ liệu
       setSongsByLikes(likeData);
 
-      // Tương tự với lượt xem
+      // Lấy bài hát theo lượt nghe
       const viewQuery = query(
         collection(db, "song"),
         orderBy("views", "desc"),
@@ -165,9 +167,11 @@ export default function Rank() {
     setRefreshing(false);
   };
 
+  // render danh sách bài hát
   const renderSongList = () => {
     const songs = activeTab === "likes" ? songsByLikes : songsByViews;
 
+    // dang load thi xoay vong vong
     if (loading) {
       return (
         <View style={styles.loadingContainer}>
@@ -176,6 +180,7 @@ export default function Rank() {
       );
     }
 
+    // ko co bai hat => thong bao 
     if (songs.length === 0) {
       return (
         <View style={styles.emptyContainer}>
@@ -197,11 +202,9 @@ export default function Rank() {
           <TouchableOpacity
             style={[
               styles.songItem,
-              // Thay đổi điều kiện highlight bài hát đang phát
               isCurrentlyPlayingSong(item.id) && styles.playingItem,
             ]}
             onPress={() => {
-              // Cập nhật đúng cách gọi playSound
               setCurrentSongList(songs);
               setCurrentlyPlaying(index);
               playSound(songs, index);

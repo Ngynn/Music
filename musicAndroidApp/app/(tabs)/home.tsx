@@ -71,7 +71,7 @@ export default function Home() {
   const [showMenuOptions, setShowMenuOptions] = useState(false);
   const [selectedSongForMenu, setSelectedSongForMenu] = useState<any>(null);
 
-  // ✅ GIỮ LẠI: Sort directions state (bản đầy đủ)
+  // ham sort mặc định theo tên A-Z
   const [sortDirections, setSortDirections] = useState({
     name: "asc" as "asc" | "desc",
     artist: "asc" as "asc" | "desc",
@@ -116,7 +116,7 @@ export default function Home() {
         ...(doc.data() as Song),
       }));
 
-      // ✅ THÊM: Sort mặc định theo tên A-Z
+      // sap xep theo ten bai hat A-Z
       const sortedData = [...data].sort((a, b) => a.name.localeCompare(b.name));
 
       setSongs(data);
@@ -308,20 +308,13 @@ export default function Home() {
     }
   };
 
-  // ✅ XÓA: Duplicate declaration này
-  // const [sortDirections, setSortDirections] = useState({
-  //   name: "asc", // 'asc' | 'desc'
-  //   artist: "asc",
-  //   views: "desc", // Views mặc định từ cao xuống thấp
-  // });
-
-  // ✅ CẬP NHẬT: Sort function với explicit typing
+  // ham sỏrt bài hát theo tên, nghệ sĩ hoặc lượt xem
   const sortSongs = (type: string) => {
     let sorted = [...songs];
-    let newDirection: "asc" | "desc"; // ✅ THÊM: Explicit type annotation
+    let newDirection: "asc" | "desc"; // biến mới để lưu hướng sắp xếp
 
     if (type === "name") {
-      // Toggle direction cho name
+      // loc theo ten bai hat
       newDirection = sortDirections.name === "asc" ? "desc" : "asc";
       if (newDirection === "asc") {
         sorted.sort((a, b) => a.name.localeCompare(b.name));
@@ -329,8 +322,10 @@ export default function Home() {
         sorted.sort((a, b) => b.name.localeCompare(a.name));
       }
       setSortDirections((prev) => ({ ...prev, name: newDirection }));
-    } else if (type === "artist") {
-      // Toggle direction cho artist
+    } 
+    
+    else if (type === "artist") {
+      // loc theo ten artist
       newDirection = sortDirections.artist === "asc" ? "desc" : "asc";
       if (newDirection === "asc") {
         sorted.sort((a, b) => a.artist.localeCompare(b.artist));
@@ -338,8 +333,10 @@ export default function Home() {
         sorted.sort((a, b) => b.artist.localeCompare(a.artist));
       }
       setSortDirections((prev) => ({ ...prev, artist: newDirection }));
-    } else if (type === "views") {
-      // Toggle direction cho views
+    } 
+    
+    else if (type === "views") {
+      // loc theo so luong view 
       newDirection = sortDirections.views === "desc" ? "asc" : "desc";
       if (newDirection === "desc") {
         sorted.sort((a, b) => (b.views || 0) - (a.views || 0));
@@ -347,10 +344,11 @@ export default function Home() {
         sorted.sort((a, b) => (a.views || 0) - (b.views || 0));
       }
       setSortDirections((prev) => ({ ...prev, views: newDirection }));
-    } else {
-      // ✅ THÊM: Default case để handle unknown type
+    } 
+    
+    else {
       console.warn(`Unknown sort type: ${type}`);
-      return; // Early return để tránh lỗi
+      return; 
     }
 
     setSortedSongs(sorted);
@@ -372,7 +370,7 @@ export default function Home() {
     success("Đã sắp xếp", messages[type] || "Đã sắp xếp");
   };
 
-  // ✅ CẬP NHẬT: Simplified sort options với toggle
+  // ham hien thi cac option 
   const showSortOptions = () => {
     const getNextDirection = (type: string, current: string) => {
       if (type === "views") {
@@ -381,6 +379,7 @@ export default function Home() {
       return current === "asc" ? "desc" : "asc";
     };
 
+    // lay bieu tuong len xuong tuong trung cho sap xep theo luot xem
     const getDirectionIcon = (type: string, direction: string) => {
       if (type === "views") {
         return direction === "desc" ? "↓" : "↑";
@@ -417,6 +416,7 @@ export default function Home() {
     ]);
   };
 
+  // menu bai hat
   const showSongMenu = (songId: string) => {
     if (Platform.OS === "ios") {
       const options = ["Hủy", "Thêm vào playlist", "Yêu thích", "Chia sẻ"];
@@ -449,6 +449,7 @@ export default function Home() {
     }
   };
 
+  // function hien thi option add vao playlist
   const showAddToPlaylistOptions = (songId: string) => {
     if (userPlaylists.length === 0) {
       // Thay Alert.alert bằng confirm
@@ -498,6 +499,8 @@ export default function Home() {
     ]);
   };
 
+
+  // chia se bai hat
   const shareSong = (songId: string) => {
     const song = sortedSongs.find((s) => s.id === songId);
     if (song) {
@@ -510,6 +513,7 @@ export default function Home() {
     }
   };
 
+  // ham callback de render cac bai hat trong FlatList
   const renderSongItem = React.useCallback(
     ({ item, index }: { item: Song; index: number }) => (
       <TouchableOpacity

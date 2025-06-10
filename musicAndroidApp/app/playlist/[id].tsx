@@ -37,10 +37,9 @@ import { useAudio } from "../context/audioContext";
 import { COLORS, SIZES } from "../constants/theme";
 import ModalPlayer from "../components/modalPlayer";
 import MiniPlayer from "../components/miniPlayer";
-import { useAlert } from "../context/alertContext"; // Thêm dòng này
-// Thêm vào import section
+import { useAlert } from "../context/alertContext"; 
 import MenuOptions from "../context/menuOptions";
-// Thêm khai báo width
+
 const { width } = Dimensions.get("window");
 
 interface PlaylistSong {
@@ -75,7 +74,6 @@ interface Playlist {
 }
 
 export default function PlaylistDetails() {
-  // ✅ CÁC HOOK VÀ STATE
   const { showAlert, confirm, success, error } = useAlert();
   const { id } = useLocalSearchParams();
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
@@ -118,22 +116,22 @@ export default function PlaylistDetails() {
     isCurrentlyPlayingSong,
   } = useAudio();
 
-  // ✅ CÁC HELPER FUNCTIONS
+  // chuyen doi số thành định dạng dễ đọc
   const formatNumber = (num: number): string => {
     if (!num && num !== 0) return "0";
 
     if (num >= 1_000_000_000) {
-      return (num / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "B";
+      return (num / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "B"; // 1 ty = 1B
     } else if (num >= 1_000_000) {
-      return (num / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+      return (num / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M"; // 1 trieu = 1M
     } else if (num >= 1_000) {
-      return (num / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
+      return (num / 1_000).toFixed(1).replace(/\.0$/, "") + "K"; // 1 nghin = 1K
     } else {
       return num.toString();
     }
   };
 
-  // ✅ FETCH FUNCTIONS
+  // lay bai hat theo playlistId 
   const fetchPlaylistSongs = useCallback(
     async (playlistId: string) => {
       try {
@@ -177,14 +175,14 @@ export default function PlaylistDetails() {
 
         setSongs(validSongs);
       } catch (err) {
-        // ✅ ĐỔI TÊN BIẾN TỪ 'error' THÀNH 'err'
         console.error("Error fetching playlist songs:", err);
-        error("Lỗi", "Không thể tải danh sách bài hát"); // ✅ THAY ALERT BẰNG CUSTOM ALERT
+        error("Lỗi", "Không thể tải danh sách bài hát"); 
       }
     },
     [error]
   ); // Thêm error vào dependencies
 
+  // lay ds bai hat yeu thich 
   const fetchFavoriteSongs = useCallback(async () => {
     if (!likedSongs || likedSongs.size === 0) {
       setSongs([]);
@@ -221,13 +219,12 @@ export default function PlaylistDetails() {
 
       setSongs(validSongs);
     } catch (err) {
-      // ✅ ĐỔI TÊN BIẾN TỪ 'error' THÀNH 'err'
       console.error("Error fetching favorite songs:", err);
-      error("Lỗi", "Không thể tải danh sách bài hát yêu thích"); // ✅ THAY ALERT BẰNG CUSTOM ALERT
+      error("Lỗi", "Không thể tải danh sách bài hát yêu thích"); 
     }
   }, [likedSongs, error]); // Thêm error vào dependencies
 
-  // ✅ CRUD FUNCTIONS
+  // 
   const removeSongFromPlaylist = useCallback(
     async (playlistSongId: string) => {
       try {
@@ -237,7 +234,7 @@ export default function PlaylistDetails() {
           // Sử dụng handleLike để unlike bài hát
           await handleLike(songId);
 
-          success("Thành công", "Đã xóa bài hát khỏi danh sách yêu thích"); // ✅ THAY ALERT BẰNG CUSTOM ALERT
+          success("Thành công", "Đã xóa bài hát khỏi danh sách yêu thích"); 
           setSongs((prevSongs) =>
             prevSongs.filter((s) => s.id !== playlistSongId)
           );
@@ -261,17 +258,16 @@ export default function PlaylistDetails() {
         setSongs((prevSongs) =>
           prevSongs.filter((s) => s.id !== playlistSongId)
         );
-        success("Thành công", "Đã xóa bài hát khỏi playlist"); // ✅ THAY ALERT BẰNG CUSTOM ALERT
+        success("Thành công", "Đã xóa bài hát khỏi playlist"); 
       } catch (err) {
-        // ✅ ĐỔI TÊN BIẾN TỪ 'error' THÀNH 'err'
         console.error("Error removing song from playlist:", err);
-        error("Lỗi", "Không thể xóa bài hát khỏi playlist"); // ✅ THAY ALERT BẰNG CUSTOM ALERT
+        error("Lỗi", "Không thể xóa bài hát khỏi playlist"); 
       }
     },
     [id, handleLike, success, error]
   ); // Thêm success, error vào dependencies
 
-  // ✅ UI HANDLER FUNCTIONS (THEO THỨ TỰ DEPENDENCIES)
+  // mo menu options
   const openMenuOptions = useCallback((song: Song) => {
     setSelectedSongForMenu({
       id: song.id,
@@ -282,11 +278,13 @@ export default function PlaylistDetails() {
     setMenuOptionsVisible(true);
   }, []);
 
+  // đóng menu options
   const closeMenuOptions = useCallback(() => {
     setMenuOptionsVisible(false);
     setSelectedSongForMenu(null);
   }, []);
 
+  // xoa bai hat
   const confirmRemoveSong = useCallback(
     (playlistSongId: string) => {
       const songToRemove = songs.find((s) => s.id === playlistSongId);
@@ -308,6 +306,7 @@ export default function PlaylistDetails() {
     [songs, id, confirm, removeSongFromPlaylist]
   );
 
+  // hien thi menu bai hat
   const showSongMenu = useCallback(
     (playlistSong: PlaylistSong) => {
       if (!playlistSong.song) return;
@@ -339,14 +338,13 @@ export default function PlaylistDetails() {
           }
         );
       } else {
-        // ✅ ANDROID: TRỰC TIẾP DÙNG MENUOPTIONS
         openMenuOptions(playlistSong.song!);
       }
     },
     [likedSongs, openMenuOptions, handleLike, confirmRemoveSong]
   );
 
-  // ✅ OTHER FUNCTIONS
+  // phat tat ca bai hat trong playlist
   const playAll = useCallback(() => {
     if (songs.length === 0) {
       showAlert("Thông báo", "Playlist không có bài hát nào để phát");
@@ -366,12 +364,12 @@ export default function PlaylistDetails() {
         showAlert("Thông báo", "Không có bài hát hợp lệ để phát");
       }
     } catch (err) {
-      // ✅ ĐỔI TÊN BIẾN TỪ 'error' THÀNH 'err'
       console.error("Error playing all songs:", err);
       error("Lỗi", "Không thể phát nhạc. Vui lòng thử lại.");
     }
   }, [songs, setCurrentSongList, playSound, showAlert, error]);
 
+  // refresh ds bai hat
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
@@ -388,7 +386,7 @@ export default function PlaylistDetails() {
     }
   }, [id, fetchFavoriteSongs, fetchPlaylistSongs, error]);
 
-  // ✅ EFFECT HOOKS
+  // focus effect de lay chi tiet playlist
   useFocusEffect(
     useCallback(() => {
       const fetchPlaylistDetails = async () => {
@@ -412,7 +410,6 @@ export default function PlaylistDetails() {
           const playlistDoc = await getDoc(doc(db, "playlists", id as string));
 
           if (!playlistDoc.exists()) {
-            // ✅ THAY ALERT BẰNG CUSTOM ALERT
             error("Lỗi", "Không tìm thấy playlist");
             router.back();
             return;
@@ -425,7 +422,6 @@ export default function PlaylistDetails() {
 
           await fetchPlaylistSongs(id as string);
         } catch (err) {
-          // ✅ ĐỔI TÊN BIẾN TỪ 'error' THÀNH 'err'
           console.error("Error fetching playlist details:", err);
           error("Lỗi", "Không thể tải thông tin playlist");
         } finally {
@@ -437,7 +433,7 @@ export default function PlaylistDetails() {
     }, [id, likedSongs, error, router])
   );
 
-  // ✅ RENDER FUNCTIONS
+  // render item bai hat trong playlist
   const renderSongItem = ({
     item,
     index,
@@ -448,7 +444,7 @@ export default function PlaylistDetails() {
     <TouchableOpacity
       style={[
         styles.songItem,
-        item.song && isCurrentlyPlayingSong(item.song.id) && styles.playingItem,
+        item.song && isCurrentlyPlayingSong(item.song.id) && styles.playingItem, 
       ]}
       onPress={() => {
         if (item.song) {
@@ -549,7 +545,7 @@ export default function PlaylistDetails() {
     </TouchableOpacity>
   );
 
-  // ✅ CONDITIONAL RENDERS
+  // neu dang loading => hien thi loading spinner
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -565,6 +561,7 @@ export default function PlaylistDetails() {
     );
   }
 
+  // ko có playlist thi hien thi error
   if (!playlist) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -580,7 +577,6 @@ export default function PlaylistDetails() {
     );
   }
 
-  // ✅ MAIN RENDER
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar

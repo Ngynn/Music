@@ -110,9 +110,9 @@ export default function UserProfile() {
     if (userId) {
       fetchUserData();
     }
-  }, [userId]); // Chỉ phụ thuộc vào userId để tránh vòng lặp vô hạn
+  }, [userId]); 
 
-  // Cập nhật hàm handleSave để refreshData sau khi save thành công
+  // kiem tra, luu va cap nhat lai du lieu nguoi dung
   const handleSave = async () => {
     if (!fullName.trim()) {
       Alert.alert("Lỗi", "Vui lòng nhập họ và tên");
@@ -144,6 +144,7 @@ export default function UserProfile() {
     }
   };
 
+  // render form hien thi va sua thong tin ca nhan
   const renderForm = () => (
     <View style={styles.formContainer}>
       <View style={styles.inputGroup}>

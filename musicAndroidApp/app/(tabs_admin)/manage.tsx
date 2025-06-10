@@ -34,7 +34,7 @@ import axios from "axios";
 import { COLORS } from "../constants/theme";
 import { Picker } from "@react-native-picker/picker";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import { useAlert } from "../context/alertContext"; // Thêm import useAlert
+import { useAlert } from "../context/alertContext"; 
 
 const { width, height } = Dimensions.get("window");
 const NOTCH_HEIGHT = Platform.OS === "ios" ? 47 : 24; // Ước tính chiều cao của notch
@@ -901,28 +901,6 @@ export default function Manage() {
 }
 
 const styles = StyleSheet.create({
-  // ❌ XÓA CÁC STYLE NÀY
-  /*
-  // Admin Player styles
-  adminPlayerContainer: { ... },
-  adminPlayerHeader: { ... },
-  adminPlayerTitle: { ... },
-  adminPlayerControls: { ... },
-  adminPlayerButton: { ... },
-
-  // Playing indicator styles
-  playingIndicator: { ... },
-  playingText: { ... },
-
-  // Update songItem to show playing state
-  songItemPlaying: { ... },
-
-  // Admin preview badge
-  adminPreviewBadge: { ... },
-  adminPreviewBadgeText: { ... },
-  */
-
-  // ✅ GIỮ LẠI CÁC STYLE CỐT LÕI
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.background || "#f8f8f8",
@@ -995,17 +973,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.cardBg || "#fff",
     borderRadius: 8,
-    height: Platform.OS === "ios" ? 45 : 50, // Tăng chiều cao cho Android
+    height: Platform.OS === "ios" ? 45 : 50, 
     justifyContent: "center",
     overflow: "hidden",
     paddingHorizontal: Platform.OS === "ios" ? 8 : 0,
   },
   sortPicker: {
-    height: Platform.OS === "ios" ? 45 : 50, // Khớp với container
-    width: Platform.OS === "android" ? "100%" : undefined, // Sửa width cho Android
+    height: Platform.OS === "ios" ? 45 : 50, 
+    width: Platform.OS === "android" ? "100%" : undefined, 
     color: COLORS.text || "#000",
-    // Loại bỏ padding không cần thiết trên Android
-    ...(Platform.OS === "android" ? { marginLeft: -8 } : {}), // Điều chỉnh vị trí cho Android
+    
+    ...(Platform.OS === "android" ? { marginLeft: -8 } : {}), 
   },
   listContainer: {
     paddingBottom: 20,

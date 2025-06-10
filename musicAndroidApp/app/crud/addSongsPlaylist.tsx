@@ -54,7 +54,6 @@ export default function AddSongsPlaylist() {
   const [playlistName, setPlaylistName] = useState("");
   const router = useRouter();
 
-  // ✅ SỬ DỤNG CUSTOM ALERT
   const { success, error, confirm } = useAlert();
 
   // Helper function để format số lượng like/view
@@ -109,7 +108,6 @@ export default function AddSongsPlaylist() {
         setFilteredSongs(songs);
       } catch (err) {
         console.error("Error fetching songs:", err);
-        // ✅ THAY ĐỔI: Sử dụng custom error alert
         error("Lỗi", "Không thể tải danh sách bài hát");
       } finally {
         setLoading(false);
@@ -117,7 +115,7 @@ export default function AddSongsPlaylist() {
     };
 
     fetchPlaylistAndSongs();
-  }, [playlistId, error]); // ✅ THÊM error vào dependency
+  }, [playlistId, error]); // error tránh eslint warning
 
   useEffect(() => {
     if (searchText.trim()) {
@@ -134,17 +132,15 @@ export default function AddSongsPlaylist() {
     }
   }, [searchText, allSongs]);
 
-  // ✅ CẬP NHẬT: Sử dụng custom alert và confirm
+  // them bai hat vao playlist
   const addSongToPlaylist = async (song: Song) => {
     try {
       // Check if song is already added
       if (playlistSongIds.has(song.id)) {
-        // ✅ THAY ĐỔI: Sử dụng custom alert với icon
         success("Thông báo", "Bài hát đã có trong playlist");
         return;
       }
 
-      // ✅ THÊM: Hiển thị confirm dialog trước khi thêm
       confirm(
         "Thêm bài hát",
         `Bạn có muốn thêm "${song.name}" vào playlist "${playlistName}"?`,
@@ -167,11 +163,9 @@ export default function AddSongsPlaylist() {
             // Update local state
             setPlaylistSongIds(new Set([...playlistSongIds, song.id]));
 
-            // ✅ THAY ĐỔI: Sử dụng custom success alert
             success("Thành công", `Đã thêm "${song.name}" vào playlist`);
           } catch (err) {
             console.error("Error adding song to playlist:", err);
-            // ✅ THAY ĐỔI: Sử dụng custom error alert
             error("Lỗi", "Không thể thêm bài hát vào playlist");
           }
         },
@@ -182,12 +176,11 @@ export default function AddSongsPlaylist() {
       );
     } catch (err) {
       console.error("Error in addSongToPlaylist:", err);
-      // ✅ THAY ĐỔI: Sử dụng custom error alert
       error("Lỗi", "Đã có lỗi xảy ra");
     }
   };
 
-  // ✅ THÊM: Function để xử lý back với confirm
+  // function xử lý quay lại với confirm nếu có thay đổi
   const handleBackPress = () => {
     if (searchText.trim()) {
       // Nếu đang có text tìm kiếm, xóa text trước
@@ -198,7 +191,7 @@ export default function AddSongsPlaylist() {
     }
   };
 
-  // ✅ THÊM: Function để clear search với confirm nếu có nhiều kết quả
+  // function xử lý xóa tìm kiếm với confirm
   const handleClearSearch = () => {
     if (filteredSongs.length < allSongs.length && filteredSongs.length > 0) {
       confirm(
@@ -213,6 +206,7 @@ export default function AddSongsPlaylist() {
     }
   };
 
+  // 
   const renderSongItem = ({ item }: { item: Song }) => (
     <View style={styles.songItem}>
       <Image source={{ uri: item.img }} style={styles.songImage} />
@@ -245,7 +239,7 @@ export default function AddSongsPlaylist() {
           playlistSongIds.has(item.id) && styles.addedButton,
         ]}
         onPress={() => addSongToPlaylist(item)}
-        disabled={playlistSongIds.has(item.id)} // ✅ THÊM: Disable khi đã thêm
+        disabled={playlistSongIds.has(item.id)} 
       >
         <Icon
           name={playlistSongIds.has(item.id) ? "check" : "add"}
@@ -309,7 +303,7 @@ export default function AddSongsPlaylist() {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={handleBackPress} // ✅ THAY ĐỔI: Sử dụng custom handler
+          onPress={handleBackPress} 
           style={styles.backButton}
         >
           <Icon name="arrow-back" size={24} color={COLORS.text} />
@@ -320,7 +314,7 @@ export default function AddSongsPlaylist() {
           <Text style={styles.playlistNameText}>Playlist: {playlistName}</Text>
         </View>
 
-        {/* ✅ THÊM: Info button để hiển thị thống kê */}
+        {/* Info button để hiển thị thống kê */}
         <TouchableOpacity
           style={styles.infoButton}
           onPress={() => {
@@ -355,7 +349,7 @@ export default function AddSongsPlaylist() {
         />
         {searchText.length > 0 && (
           <TouchableOpacity
-            onPress={handleClearSearch} // ✅ THAY ĐỔI: Sử dụng custom handler
+            onPress={handleClearSearch} 
             style={styles.clearButton}
           >
             <Icon name="close" size={20} color={COLORS.textSecondary} />
@@ -363,7 +357,7 @@ export default function AddSongsPlaylist() {
         )}
       </View>
 
-      {/* ✅ THÊM: Search results info */}
+      {/* Search results info */}
       {searchText.trim() !== "" && (
         <View style={styles.searchResultsInfo}>
           <Text style={styles.searchResultsText}>
@@ -383,12 +377,12 @@ export default function AddSongsPlaylist() {
           renderItem={renderSongItem}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
-          // ✅ THÊM: Performance optimizations
+          // Performance optimizations
           removeClippedSubviews={true}
           maxToRenderPerBatch={10}
           windowSize={10}
           getItemLayout={(data, index) => ({
-            length: 75, // Estimated height của mỗi item
+            length: 75, 
             offset: 75 * index,
             index,
           })}
@@ -409,7 +403,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: COLORS.background,
   },
-  // ✅ THÊM: Loading text style
+  // Loading text style
   loadingText: {
     marginTop: 16,
     fontSize: SIZES.md,
@@ -444,7 +438,7 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     marginTop: 2,
   },
-  // ✅ THÊM: Info button style
+  // Info button style
   infoButton: {
     width: 40,
     height: 40,
@@ -476,7 +470,7 @@ const styles = StyleSheet.create({
   clearButton: {
     padding: 8,
   },
-  // ✅ THÊM: Search results info styles
+  // Search results info styles
   searchResultsInfo: {
     paddingHorizontal: SIZES.md,
     paddingBottom: SIZES.sm,
@@ -555,7 +549,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: SIZES.xl,
   },
-  // ✅ THÊM: Empty state styles
+  // Empty state styles
   emptyTitle: {
     fontSize: SIZES.lg,
     fontWeight: "bold",

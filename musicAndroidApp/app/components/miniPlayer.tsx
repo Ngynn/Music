@@ -4,6 +4,7 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import { ProgressBar } from "react-native-paper";
 import { COLORS } from "../constants/theme";
 
+// prop cua mini player, de truyen vao component
 interface MiniPlayerProps {
   currentSong: any;
   isPlaying: boolean;
@@ -15,6 +16,7 @@ interface MiniPlayerProps {
   isAdminPreview?: boolean;
 }
 
+// Component MiniPlayer
 const MiniPlayer: React.FC<MiniPlayerProps> = ({
   currentSong,
   isPlaying,

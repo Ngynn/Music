@@ -139,6 +139,7 @@ export default function Playlists() {
     }
   };
 
+  // lay ds playlist cua user
   const fetchUserPlaylists = async () => {
     if (!user) {
       setLoading(false);
@@ -180,6 +181,7 @@ export default function Playlists() {
     }, [])
   );
 
+  // tao playlist
   const createPlaylist = async () => {
     if (!user) {
       // Thay Alert.alert bằng error
@@ -243,6 +245,7 @@ export default function Playlists() {
     }
   };
 
+  // xoa playlist
   const deletePlaylist = async (playlistId: string) => {
     // Thay Alert.alert bằng confirm
     confirm(
@@ -252,21 +255,25 @@ export default function Playlists() {
         try {
           await deleteDoc(doc(db, "playlists", playlistId));
 
+          // lay ds bai hat trong playlist theo playlistId
           const songsQuery = query(
             collection(db, "playlistSongs"),
             where("playlistId", "==", playlistId)
           );
+          
+          // lay thong tin bai hat trong playlist
           const songsSnapshot = await getDocs(songsQuery);
           const deletePromises: Promise<void>[] = [];
 
+          // tao promise xoa tung bai hat trong playlist
           songsSnapshot.forEach((doc) => {
             deletePromises.push(deleteDoc(doc.ref));
           });
 
+          //execute 
           await Promise.all(deletePromises);
 
           setUserPlaylists(userPlaylists.filter((p) => p.id !== playlistId));
-          // Thêm thông báo thành công
           success("Thành công", "Đã xóa playlist");
         } catch (err) {
           console.error("Lỗi khi xóa playlist:", err);
@@ -276,6 +283,7 @@ export default function Playlists() {
     );
   };
 
+  // sua playlist
   const updatePlaylist = async () => {
     if (!editingPlaylist || !newPlaylistName.trim()) {
       error("Lỗi", "Vui lòng nhập tên playlist");
@@ -292,6 +300,7 @@ export default function Playlists() {
         coverImgUrl = await uploadToCloudinary(selectedCoverImg);
       }
 
+      // cap nhat playlist trong firestore
       const playlistRef = doc(db, "playlists", editingPlaylist.id);
       await updateDoc(playlistRef, {
         name: newPlaylistName.trim(),
@@ -300,6 +309,7 @@ export default function Playlists() {
         updatedAt: serverTimestamp(),
       });
 
+      // refresh de hien thi info moi
       setUserPlaylists(
         userPlaylists.map((p) =>
           p.id === editingPlaylist.id
@@ -329,6 +339,7 @@ export default function Playlists() {
     }
   };
 
+  // xu ly khi user nhan nut sua playlist
   const handleEditPlaylist = (playlist: Playlist) => {
     setEditingPlaylist(playlist);
     setNewPlaylistName(playlist.name);
@@ -337,6 +348,7 @@ export default function Playlists() {
     setModalVisible(true);
   };
 
+  // xu ly khi user chon anh bia playlist
   const handleSelectCoverImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -454,6 +466,7 @@ export default function Playlists() {
     );
   };
 
+  // render modal 
   const renderModal = () => (
     <Modal
       animationType="slide"
@@ -798,7 +811,6 @@ export default function Playlists() {
   );
 }
 
-// Các styles giữ nguyên
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,

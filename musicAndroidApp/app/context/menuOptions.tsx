@@ -61,7 +61,7 @@ const MenuOptions: React.FC<MenuOptionsProps> = ({
     useState(false);
   const [hasInitialFetch, setHasInitialFetch] = useState(false);
 
-  // ✅ THÊM STATE ĐỂ TRACK USER CÓ PLAYLIST HAY KHÔNG
+  // state de check user co playlist hay ko
   const [userHasPlaylists, setUserHasPlaylists] = useState<boolean | null>(
     null
   ); // null = chưa check
@@ -106,10 +106,10 @@ const MenuOptions: React.FC<MenuOptionsProps> = ({
       setIsLoading(true);
     }
 
-    // ✅ TẠO REAL-TIME LISTENER CHO PLAYLISTS CỦA USER
+    // lay playlist theo user id
     const playlistsQuery = query(
       collection(db, "playlists"),
-      where("userId", "==", userId) // ← FILTER BY USER ID
+      where("userId", "==", userId) 
     );
 
     const unsubscribe = onSnapshot(
@@ -120,7 +120,7 @@ const MenuOptions: React.FC<MenuOptionsProps> = ({
             `🔄 Playlist listener triggered: ${snapshot.docs.length} playlists for user ${userId}`
           );
 
-          // ✅ KIỂM TRA USER CÓ PLAYLIST HAY KHÔNG
+          // ktra user co playlist ko
           const hasPlaylists = !snapshot.empty;
           setUserHasPlaylists(hasPlaylists);
 
@@ -131,13 +131,13 @@ const MenuOptions: React.FC<MenuOptionsProps> = ({
             return;
           }
 
-          // ✅ NẾU CÓ PLAYLIST, XỬ LÝ VÀ HIỂN THỊ
+         // 
           const playlistsWithSongs = await Promise.all(
             snapshot.docs.map(async (playlistDoc) => {
               try {
                 const playlistData = playlistDoc.data();
 
-                // ✅ DOUBLE CHECK USER OWNERSHIP (bảo mật)
+                // double check userId, ktra playlist
                 if (playlistData.userId !== userId) {
                   console.warn(
                     `⚠️ Playlist ${playlistDoc.id} doesn't belong to user ${userId}`

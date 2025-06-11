@@ -8,9 +8,9 @@ import {
   Image,
   ActivityIndicator,
   Dimensions,
-  SafeAreaView, // Thêm SafeAreaView
-  StatusBar, // Thêm StatusBar
-  Platform, // Thêm Platform
+  SafeAreaView, 
+  StatusBar, 
+  Platform,
 } from "react-native";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebaseConfig";

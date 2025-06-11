@@ -56,6 +56,7 @@ export default function Search() {
     isCurrentlyPlayingSong,
   } = useAudio();
 
+  // lay danh sach bai hat tu Firestore
   const fetchSongs = async () => {
     try {
       const snapshot = await getDocs(collection(db, "song"));
@@ -66,6 +67,7 @@ export default function Search() {
     }
   };
 
+  // xu ly tim bai hat
   const handleSearch = (query: string) => {
     setSearchQuery(query);
 
@@ -74,6 +76,7 @@ export default function Search() {
       return;
     }
 
+    // chuyen doi ten bai hat trong query va ten nghe si ve chu thuong
     const filteredSongs = songs.filter(
       (song) =>
         song.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -82,7 +85,9 @@ export default function Search() {
     );
 
     setSearchResults(filteredSongs);
-    if (filteredSongs.length > 0) {
+
+    // Neu co ket qua tim kiem => cap nhat danh sach bai hat 
+    if (filteredSongs.length > 0) { 
       setCurrentSongList(filteredSongs);
     }
   };

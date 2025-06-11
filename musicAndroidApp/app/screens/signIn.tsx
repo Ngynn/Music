@@ -34,6 +34,7 @@ export default function SignIn() {
 
   const { success, error, confirm } = useAlert();
 
+  // xu ly dang nhap
   const handleSignIn = async () => {
     // Validate input
     if (!email.trim()) {
@@ -73,7 +74,7 @@ export default function SignIn() {
     }
   };
 
-  // ✅ CẬP NHẬT: Function xử lý quên mật khẩu với modal
+  // xu ly quên mật khẩu
   const handleForgotPassword = () => {
     if (email.trim()) {
       // Nếu có email, confirm trực tiếp
@@ -89,7 +90,7 @@ export default function SignIn() {
     }
   };
 
-  // ✅ THÊM: Function xử lý submit từ modal
+  // xu ly event submit trong modal quên mật khẩu
   const handleModalSubmit = () => {
     if (!resetEmail.trim()) {
       error("Lỗi", "Vui lòng nhập email");
@@ -106,7 +107,7 @@ export default function SignIn() {
     sendResetEmail(resetEmail);
   };
 
-  // ✅ CẬP NHẬT: Function gửi email reset password với custom alert
+  // gui email đặt lại mật khẩu
   const sendResetEmail = async (emailAddress: string) => {
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -124,7 +125,7 @@ export default function SignIn() {
         `Email đặt lại mật khẩu đã được gửi đến:\n${emailAddress}\n\nVui lòng kiểm tra hộp thư của bạn (bao gồm cả thư mục spam).`
       );
 
-      // ✅ THÊM: Auto-fill email nếu user chưa nhập
+      // Nếu email trong modal chưa được nhập, cập nhật state để hiển thị
       if (!email.trim()) {
         setEmail(emailAddress);
       }
@@ -228,11 +229,11 @@ export default function SignIn() {
             </TouchableOpacity>
           </View>
 
-          {/* ✅ CẬP NHẬT: Thêm onPress handler cho quên mật khẩu */}
+          {/* quen mat khau */}
           <TouchableOpacity
             style={styles.forgotPassword}
             onPress={handleForgotPassword}
-            disabled={loading} // Disable khi đang loading
+            disabled={loading}
           >
             <Text
               style={[
@@ -269,7 +270,7 @@ export default function SignIn() {
         </View>
       </ScrollView>
 
-      {/* ✅ THÊM: Modal cho forgot password */}
+      {/* modal forgot password */}
       <Modal
         visible={showForgotPasswordModal}
         transparent
@@ -344,7 +345,6 @@ export default function SignIn() {
   );
 }
 
-// ✅ THÊM: Styles cho modal
 const styles = StyleSheet.create({
   gradient: {
     position: "absolute",
@@ -425,12 +425,12 @@ const styles = StyleSheet.create({
   forgotPassword: {
     alignSelf: "flex-end",
     marginBottom: SIZES.lg,
-    padding: SIZES.xs, // ✅ THÊM: Padding để dễ touch
+    padding: SIZES.xs,
   },
   forgotPasswordText: {
     color: COLORS.primary,
     fontSize: SIZES.sm,
-    fontWeight: "500", // ✅ THÊM: Font weight
+    fontWeight: "500",
   },
   button: {
     backgroundColor: COLORS.primary,
@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: "bold",
   },
-  // ✅ THÊM: Styles cho modal
+
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",

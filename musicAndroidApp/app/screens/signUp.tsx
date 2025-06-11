@@ -19,7 +19,7 @@ import { COLORS, SIZES } from "../constants/theme";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import Loading from "../loading/loading";
 import { LinearGradient } from "expo-linear-gradient";
-import { useAlert } from "../context/alertContext"; // Thêm import useAlert
+import { useAlert } from "../context/alertContext"; 
 
 export default function SignUp() {
   const { success, error, confirm } = useAlert();
@@ -33,8 +33,9 @@ export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // kiem tra form
   const validateForm = () => {
-    if (!fullName.trim()) {
+    if (!fullName.trim()) { 
       error("Lỗi", "Vui lòng nhập họ và tên");
       return false;
     }
@@ -69,6 +70,7 @@ export default function SignUp() {
     return true;
   };
 
+  // Xử lý đăng ký người dùng
   const handleSignUp = async () => {
     if (!validateForm()) return;
 
@@ -80,7 +82,7 @@ export default function SignUp() {
         email,
         password
       );
-      const { uid } = userCredential.user;
+      const { uid } = userCredential.user; // Lấy UID của người dùng
 
       // Tạo document trong Firestore
       const userDocRef = doc(db, "users", uid);
@@ -109,7 +111,6 @@ export default function SignUp() {
         errorMessage = "Mật khẩu quá yếu";
       }
 
-      // Thay thế Alert.alert bằng error
       error("Lỗi đăng ký", errorMessage);
     } finally {
       setLoading(false);

@@ -17,7 +17,7 @@ import { router } from "expo-router";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { getAuth, signOut } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useAlert } from "../context/alertContext"; // Thêm import useAlert
+import { useAlert } from "../context/alertContext"; 
 
 const SettingsScreen = () => {
   // Sử dụng hook useAlert

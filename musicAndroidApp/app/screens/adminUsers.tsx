@@ -31,7 +31,7 @@ import {
 import { db } from "../../firebaseConfig";
 import { useAlert } from "../context/alertContext";
 
-// ✅ INTERFACES - BỎ isActive FIELDS
+// dinh nghia kieu du lieu
 interface User {
   id: string;
   email: string;
@@ -63,22 +63,18 @@ interface UserStats {
 }
 
 export default function AdminUsers() {
-  // ✅ HOOKS & STATE - BỎ filterActive
   const { confirm, success, error } = useAlert();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState<"all" | "user" | "admin">("all");
-  // BỎ filterActive
   const [userStats, setUserStats] = useState<UserStats>({
     totalUsers: 0,
     adminUsers: 0,
     totalLikedSongs: 0,
-    // BỎ activeUsers
   });
 
-  // Modal states
   const [showEditModal, setShowEditModal] = useState(false);
   const [showUserDetailModal, setShowUserDetailModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -90,6 +86,7 @@ export default function AdminUsers() {
   });
   const [updating, setUpdating] = useState(false);
 
+  // lay danh sach nguoi dung tu firestore
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
@@ -133,19 +130,17 @@ export default function AdminUsers() {
     }
   }, [error]);
 
-  // ✅ REFRESH HANDLER
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchUsers();
     setRefreshing(false);
   }, [fetchUsers]);
 
-  // ✅ INITIAL LOAD
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
 
-  // ✅ FILTER USERS
+  // loc danh sach nguoi dung theo search query va role
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
       !searchQuery ||
@@ -157,7 +152,7 @@ export default function AdminUsers() {
     return matchesSearch && matchesRole;
   });
 
-  // ✅ OPEN EDIT MODAL
+  // open modal chỉnh sửa người dùng
   const openEditModal = (user: User) => {
     setSelectedUser(user);
     setEditData({
@@ -169,13 +164,13 @@ export default function AdminUsers() {
     setShowEditModal(true);
   };
 
-  // ✅ OPEN USER DETAIL MODAL
+  // open modal hiển thị chi tiết người dùng
   const openUserDetailModal = (user: User) => {
     setSelectedUser(user);
     setShowUserDetailModal(true);
   };
 
-  // ✅ UPDATE USER - BỎ isActive
+  // update thông tin người dùng
   const updateUser = async () => {
     if (!selectedUser) return;
 
@@ -213,7 +208,7 @@ export default function AdminUsers() {
     }
   };
 
-  // ✅ DELETE USER
+  // xoa tài khoản người dùng
   const deleteUserAccount = async (user: User) => {
     confirm(
       "Xác nhận xóa",
@@ -228,9 +223,8 @@ export default function AdminUsers() {
             playlistsRef,
             where("userId", "==", user.id)
           );
-          const playlistSnapshot = await getDocs(playlistQuery);
 
-          // ✅ FIX: Sử dụng map thay vì forEach + push
+          const playlistSnapshot = await getDocs(playlistQuery);
           const deletePromises = playlistSnapshot.docs.map((doc) =>
             deleteDoc(doc.ref)
           );
@@ -255,7 +249,7 @@ export default function AdminUsers() {
     );
   };
 
-  // ✅ PROMOTE TO ADMIN
+  // nang cap cho nguoi dung thanh admin
   const promoteToAdmin = async (user: User) => {
     confirm(
       "Cấp quyền Admin",
@@ -287,7 +281,7 @@ export default function AdminUsers() {
     );
   };
 
-  // ✅ DEMOTE FROM ADMIN
+  // giang cap quyen admin
   const demoteFromAdmin = async (user: User) => {
     confirm(
       "Thu hồi quyền Admin",
@@ -319,7 +313,7 @@ export default function AdminUsers() {
     );
   };
 
-  // ✅ RENDER USER ITEM - BỎ statusIndicator và toggle action
+  // 
   const renderUserItem = ({ item }: { item: User }) => (
     <TouchableOpacity
       style={styles.userCard}
@@ -417,6 +411,8 @@ export default function AdminUsers() {
           </TouchableOpacity>
         )}
 
+        {/* Disable or hide the delete button for admin */}
+      {item.role !== "admin" && (
         <TouchableOpacity
           style={styles.actionButton}
           onPress={(e) => {
@@ -426,11 +422,12 @@ export default function AdminUsers() {
         >
           <Icon name="delete" size={20} color={COLORS.error} />
         </TouchableOpacity>
+      )}
       </View>
     </TouchableOpacity>
   );
 
-  // ✅ RENDER USER DETAIL MODAL
+  // render modal hien thi thong tin chi tiet cua nguoi dung
   const renderUserDetailModal = () => (
     <Modal
       visible={showUserDetailModal}
@@ -614,7 +611,7 @@ export default function AdminUsers() {
     </Modal>
   );
 
-  // ✅ RENDER EDIT MODAL - BỎ switch isActive
+  // render modal chỉnh sửa người dùng
   const renderEditModal = () => (
     <Modal
       visible={showEditModal}
@@ -707,7 +704,7 @@ export default function AdminUsers() {
     </Modal>
   );
 
-  // ✅ RENDER STATS HEADER - BỎ activeUsers
+  // render header thống kê người dùng
   const renderStatsHeader = () => (
     <View style={styles.statsHeader}>
       <View style={styles.statItem}>
@@ -731,7 +728,7 @@ export default function AdminUsers() {
     </View>
   );
 
-  // ✅ RENDER MAIN COMPONENT
+  // render giao diện chính
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
@@ -846,7 +843,6 @@ export default function AdminUsers() {
   );
 }
 
-// ✅ STYLES - BỎ statusIndicator, switch styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,

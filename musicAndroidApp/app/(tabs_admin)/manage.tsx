@@ -34,10 +34,10 @@ import axios from "axios";
 import { COLORS } from "../constants/theme";
 import { Picker } from "@react-native-picker/picker";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import { useAlert } from "../context/alertContext"; // Thêm import useAlert
+import { useAlert } from "../context/alertContext";
 
 const { width, height } = Dimensions.get("window");
-const NOTCH_HEIGHT = Platform.OS === "ios" ? 47 : 24; // Ước tính chiều cao của notch
+const NOTCH_HEIGHT = Platform.OS === "ios" ? 47 : 24;
 
 // Thêm hàm formatViewCount vào phần đầu file, sau khi khai báo constants
 const formatViewCount = (views: number): string => {
@@ -60,8 +60,6 @@ const formatViewCount = (views: number): string => {
 
 export default function Manage() {
   const { confirm, prompt, success, error } = useAlert();
-
-  // ✅ GIỮ LẠI CÁC STATE CỐT LÕI
   const [songs, setSongs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -71,8 +69,6 @@ export default function Manage() {
   const [isModalProcessing, setIsModalProcessing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("name");
-
-  // Form state for editing
   const [newName, setNewName] = useState("");
   const [newAudio, setNewAudio] = useState("");
   const [newArtist, setNewArtist] = useState("");
@@ -84,20 +80,14 @@ export default function Manage() {
   const [newFileUri, setNewFileUri] = useState<string | null>(null);
   const [newFileInfo, setNewFileInfo] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-
-  // Custom action sheet states
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [selectedSongForAction, setSelectedSongForAction] =
     useState<Song | null>(null);
-
-  // Thêm state quản lý menu
   const [showMenu, setShowMenu] = useState(false);
   const [selectedSongForMenu, setSelectedSongForMenu] = useState<any | null>(
     null
   );
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
-
-  // Animation cho menu
   const menuAnimation = useRef(new Animated.Value(0)).current;
 
   // Fetch songs with optional sorting
@@ -1154,13 +1144,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingTop: 20, // Thêm padding để tránh camera
+    paddingTop: 20,
   },
   modalContent: {
     width: "90%",
     backgroundColor: COLORS.background || "#fff",
     borderRadius: 12,
-    maxHeight: "85%", // Giảm xuống để tránh bị cắt
+    maxHeight: "85%",
     overflow: "hidden",
   },
   modalHeader: {
@@ -1186,7 +1176,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 24,
     position: "relative",
-    marginTop: 10, // Thêm margin-top để tránh camera
+    marginTop: 10,
   },
   previewImage: {
     width: 120,
@@ -1197,8 +1187,8 @@ const styles = StyleSheet.create({
   previewOverlay: {
     position: "absolute",
     bottom: 0,
-    right: 0, // Đặt nút ở góc phải dưới
-    transform: [{ translateX: -30 }], // Điều chỉnh vị trí
+    right: 0,
+    transform: [{ translateX: -30 }],
   },
   changeImageButton: {
     backgroundColor: COLORS.primary || "#1DB954",

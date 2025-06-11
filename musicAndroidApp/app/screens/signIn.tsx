@@ -21,15 +21,15 @@ import { COLORS, SIZES } from "../constants/theme";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { LinearGradient } from "expo-linear-gradient";
 import Loading from "../loading/loading";
-import { useAlert } from "../context/alertContext"; // ✅ THÊM import custom alert
+import { useAlert } from "../context/alertContext";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false); // ✅ THÊM
-  const [resetEmail, setResetEmail] = useState(""); // ✅ THÊM
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
   const router = useRouter();
 
   const { success, error, confirm } = useAlert();

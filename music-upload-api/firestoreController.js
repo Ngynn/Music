@@ -1,16 +1,3 @@
-// // firestoreController.js
-// const admin = require('firebase-admin');
-
-// // Tránh khởi tạo nhiều lần nếu app đã được khởi tạo
-// if (!admin.apps.length) {
-//   const serviceAccount = require('./musicapp-cec76-firebase-adminsdk-fbsvc-fc315e9049.json');
-
-//   admin.initializeApp({
-//     credential: admin.credential.cert(serviceAccount),
-//     // URL này nên là dạng chuẩn: https://<PROJECT_ID>.firebaseio.com
-//     databaseURL: 'https://musicapp-cec76.firebaseio.com',
-//   });
-// }
 
 const admin = require('firebase-admin');
 require('dotenv').config();

@@ -13,7 +13,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { auth, db } from "../../firebaseConfig";
-import { doc, getDoc, updateDoc } from "firebase/firestore"; // Thêm getDoc
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { COLORS, SIZES } from "../constants/theme";

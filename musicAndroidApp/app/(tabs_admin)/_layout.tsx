@@ -63,20 +63,6 @@ export default function TabLayout() {
         headerShown: false,
       }}
     >
-      {/* <Tabs.Screen
-        name="homeAdmin"
-        options={{
-          title: "Trang chủ",
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon
-              name="home"
-              color={color}
-              focused={focused}
-              type="material"
-            />
-          ),
-        }}
-      /> */}
       <Tabs.Screen
         name="manage"
         options={{
@@ -91,20 +77,7 @@ export default function TabLayout() {
           ),
         }}
       />
-      {/* <Tabs.Screen
-        name="add"
-        options={{
-          title: "Thêm mới",
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon
-              name="add"
-              color={color}
-              focused={focused}
-              type="material"
-            />
-          ),
-        }}
-      /> */}
+
       <Tabs.Screen
         name="settings"
         options={{

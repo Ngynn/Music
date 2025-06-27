@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  Alert,
   ScrollView,
   SafeAreaView,
   StatusBar,
@@ -17,10 +16,12 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { COLORS, SIZES } from "../constants/theme";
+import { useAlert } from "../context/alertContext";
 
 export default function UserProfile() {
   const { userData } = useLocalSearchParams();
   const router = useRouter();
+  const { success, error, confirm } = useAlert();
 
   // Phân tích userData từ params
   const [parsedData, setParsedData] = useState<{
@@ -64,9 +65,9 @@ export default function UserProfile() {
       } else {
         console.error("Không tìm thấy dữ liệu người dùng");
       }
-    } catch (error) {
-      console.error("Lỗi khi lấy thông tin người dùng:", error);
-      Alert.alert(
+    } catch (err) {
+      console.error("Lỗi khi lấy thông tin người dùng:", err);
+      error(
         "Lỗi",
         "Không thể tải thông tin người dùng. Vui lòng thử lại sau."
       );
@@ -86,15 +87,15 @@ export default function UserProfile() {
           setUserId(auth.currentUser.uid);
         }
       } else {
-        Alert.alert("Lỗi", "Không tìm thấy thông tin người dùng.");
+        error("Lỗi", "Không tìm thấy thông tin người dùng.");
         router.back();
       }
-    } catch (error) {
-      console.error("Lỗi khi phân tích dữ liệu người dùng:", error);
-      Alert.alert("Lỗi", "Không thể đọc thông tin người dùng.");
+    } catch (err) {
+      console.error("Lỗi khi phân tích dữ liệu người dùng:", err);
+      error("Lỗi", "Không thể đọc thông tin người dùng.");
       router.back();
     }
-  }, [userData]);
+  }, [userData, error, router]);
 
   // Cập nhật state từ parsedData khi nó thay đổi
   useEffect(() => {
@@ -110,12 +111,22 @@ export default function UserProfile() {
     if (userId) {
       fetchUserData();
     }
-  }, [userId]); 
+  }, [userId]);
 
   // kiem tra, luu va cap nhat lai du lieu nguoi dung
   const handleSave = async () => {
     if (!fullName.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập họ và tên");
+      error("Lỗi", "Vui lòng nhập họ và tên");
+      return;
+    }
+
+    if (email && !isValidEmail(email)) {
+      error("Lỗi", "Email không hợp lệ");
+      return;
+    }
+
+    if (phoneNumber && !isValidPhoneNumber(phoneNumber)) {
+      error("Lỗi", "Số điện thoại không hợp lệ");
       return;
     }
 
@@ -131,11 +142,11 @@ export default function UserProfile() {
       // Sau khi cập nhật thành công, fetch lại dữ liệu mới nhất
       await fetchUserData();
 
-      Alert.alert("Thành công", "Thông tin cá nhân đã được cập nhật!");
+      success("Thành công", "Thông tin cá nhân đã được cập nhật!");
       setIsEditing(false);
-    } catch (error) {
-      console.error("Lỗi khi cập nhật thông tin cá nhân:", error);
-      Alert.alert(
+    } catch (err) {
+      console.error("Lỗi khi cập nhật thông tin cá nhân:", err);
+      error(
         "Lỗi",
         "Không thể cập nhật thông tin cá nhân. Vui lòng thử lại."
       );
@@ -144,11 +155,47 @@ export default function UserProfile() {
     }
   };
 
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const isValidPhoneNumber = (phone: string) => {
+    const phoneRegex = /^[\+]?[0-9\-\(\)\s]{10,15}$/;
+    return phoneRegex.test(phone);
+  };
+
+  const handleCancel = () => {
+    // Kiểm tra xem có thay đổi gì không
+    const hasChanges =
+      fullName !== (parsedData?.fullName || "") ||
+      email !== (parsedData?.email || "") ||
+      phoneNumber !== (parsedData?.phoneNumber || "");
+
+    if (hasChanges) {
+      // Nếu có thay đổi, hiển thị confirm dialog
+      confirm(
+        "Xác nhận",
+        "Bạn có thay đổi chưa được lưu. Bạn có muốn hủy bỏ những thay đổi này?",
+        () => {
+          // Nếu người dùng xác nhận hủy
+          setFullName(parsedData?.fullName || "");
+          setEmail(parsedData?.email || "");
+          setPhoneNumber(parsedData?.phoneNumber || "");
+          setIsEditing(false);
+        }
+      );
+    } else {
+      // Nếu không có thay đổi, thoát luôn
+      setIsEditing(false);
+    }
+  };
+
   // render form hien thi va sua thong tin ca nhan
   const renderForm = () => (
     <View style={styles.formContainer}>
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Họ và tên</Text>
+        <Text style={styles.label}>Họ và tên *</Text>
         <View style={styles.inputWrapper}>
           <Icon
             name="person"
@@ -163,8 +210,12 @@ export default function UserProfile() {
             placeholder="Nhập họ và tên"
             placeholderTextColor={COLORS.textSecondary}
             editable={isEditing}
+            maxLength={50}
           />
         </View>
+        {isEditing && (
+          <Text style={styles.charCount}>{fullName.length}/50</Text>
+        )}
       </View>
 
       <View style={styles.inputGroup}>
@@ -180,12 +231,17 @@ export default function UserProfile() {
             style={[styles.input, !isEditing && styles.inputDisabled]}
             value={email}
             onChangeText={setEmail}
-            placeholder="Nhập email"
+            placeholder="Nhập email (tùy chọn)"
             placeholderTextColor={COLORS.textSecondary}
             keyboardType="email-address"
             editable={isEditing}
+            autoCapitalize="none"
+            maxLength={100}
           />
         </View>
+        {isEditing && (
+          <Text style={styles.charCount}>{email.length}/100</Text>
+        )}
       </View>
 
       <View style={styles.inputGroup}>
@@ -201,12 +257,16 @@ export default function UserProfile() {
             style={[styles.input, !isEditing && styles.inputDisabled]}
             value={phoneNumber}
             onChangeText={setPhoneNumber}
-            placeholder="Nhập số điện thoại"
+            placeholder="Nhập số điện thoại (tùy chọn)"
             placeholderTextColor={COLORS.textSecondary}
             keyboardType="phone-pad"
             editable={isEditing}
+            maxLength={15}
           />
         </View>
+        {isEditing && (
+          <Text style={styles.charCount}>{phoneNumber.length}/15</Text>
+        )}
       </View>
 
       {/* Action Buttons */}
@@ -214,15 +274,16 @@ export default function UserProfile() {
         <View style={styles.actionButtonsContainer}>
           <TouchableOpacity
             style={styles.cancelButton}
-            onPress={() => {
-              setFullName(parsedData?.fullName || "");
-              setEmail(parsedData?.email || "");
-              setPhoneNumber(parsedData?.phoneNumber || "");
-              setIsEditing(false);
-            }}
+            onPress={handleCancel}
             activeOpacity={0.7}
             disabled={isLoading}
           >
+            <Icon
+              name="close"
+              size={20}
+              color={COLORS.text}
+              style={{ marginRight: 8 }}
+            />
             <Text style={styles.cancelButtonText}>Hủy</Text>
           </TouchableOpacity>
 
@@ -235,7 +296,15 @@ export default function UserProfile() {
             {isLoading ? (
               <ActivityIndicator size="small" color={COLORS.white} />
             ) : (
-              <Text style={styles.saveButtonText}>Lưu thay đổi</Text>
+              <>
+                <Icon
+                  name="save"
+                  size={20}
+                  color={COLORS.white}
+                  style={{ marginRight: 8 }}
+                />
+                <Text style={styles.saveButtonText}>Lưu thay đổi</Text>
+              </>
             )}
           </TouchableOpacity>
         </View>
@@ -269,6 +338,7 @@ export default function UserProfile() {
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {/* Header Section */}
         <View style={styles.header}>
@@ -285,6 +355,14 @@ export default function UserProfile() {
 
         {/* Form Content */}
         {renderForm()}
+
+        {/* **FIX 15: Thêm loading overlay khi đang xử lý** */}
+        {isLoading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+            <Text style={styles.loadingText}>Đang xử lý...</Text>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -313,6 +391,18 @@ const styles = StyleSheet.create({
     marginTop: SIZES.md,
     color: COLORS.text,
     fontSize: SIZES.md,
+  },
+  // **FIX 16: Thêm loading overlay style**
+  loadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
   },
   header: {
     flexDirection: "row",
@@ -349,6 +439,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cardBg,
     borderRadius: 10,
     paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: "transparent",
   },
   inputIcon: {
     marginRight: 10,
@@ -362,10 +454,18 @@ const styles = StyleSheet.create({
   inputDisabled: {
     color: COLORS.textSecondary,
   },
+  // **FIX 17: Thêm style cho character count**
+  charCount: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    textAlign: "right",
+    marginTop: 4,
+  },
   actionButtonsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: SIZES.lg,
+    gap: 12,
   },
   cancelButton: {
     backgroundColor: COLORS.cardBg,
@@ -374,9 +474,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     flex: 1,
-    marginRight: 10,
     borderWidth: 1,
     borderColor: COLORS.hoverBg,
+    flexDirection: "row",
   },
   cancelButtonText: {
     fontSize: SIZES.md,
@@ -390,7 +490,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     flex: 1,
-    marginLeft: 10,
+    flexDirection: "row",
   },
   saveButtonText: {
     fontSize: SIZES.md,

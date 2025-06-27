@@ -9,7 +9,6 @@ import {
   Platform,
   ScrollView,
   StatusBar,
-  // Alert, // Xóa import Alert
 } from "react-native";
 import { auth, db } from "../../firebaseConfig";
 import { createUserWithEmailAndPassword } from "firebase/auth";
@@ -19,7 +18,7 @@ import { COLORS, SIZES } from "../constants/theme";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import Loading from "../loading/loading";
 import { LinearGradient } from "expo-linear-gradient";
-import { useAlert } from "../context/alertContext"; 
+import { useAlert } from "../context/alertContext";
 
 export default function SignUp() {
   const { success, error, confirm } = useAlert();
@@ -35,7 +34,7 @@ export default function SignUp() {
 
   // kiem tra form
   const validateForm = () => {
-    if (!fullName.trim()) { 
+    if (!fullName.trim()) {
       error("Lỗi", "Vui lòng nhập họ và tên");
       return false;
     }

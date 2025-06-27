@@ -5,8 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  // Alert, // Xóa import Alert
-  Switch,
   ActivityIndicator,
   Platform,
   StatusBar,
@@ -17,17 +15,14 @@ import { router } from "expo-router";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { getAuth, signOut } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useAlert } from "../context/alertContext"; 
+import { useAlert } from "../context/alertContext";
 
 const SettingsScreen = () => {
-  // Sử dụng hook useAlert
   const { confirm, prompt, success, error } = useAlert();
 
   const [isLoading, setIsLoading] = useState(false);
   const [userName, setUserName] = useState("");
   const [userRole, setUserRole] = useState("");
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [darkModeEnabled, setDarkModeEnabled] = useState(true);
 
   const auth = getAuth();
 
@@ -52,26 +47,6 @@ const SettingsScreen = () => {
 
     fetchUserInfo();
   }, []);
-
-  // Xử lý notification toggle với thông báo
-  const handleNotificationToggle = (value: any) => {
-    setNotificationsEnabled(value);
-    if (value) {
-      success("Thông báo", "Đã bật thông báo");
-    } else {
-      success("Thông báo", "Đã tắt thông báo");
-    }
-  };
-
-  // Xử lý dark mode toggle với thông báo
-  const handleDarkModeToggle = (value: any) => {
-    setDarkModeEnabled(value);
-    if (value) {
-      success("Giao diện", "Đã chuyển sang chế độ tối");
-    } else {
-      success("Giao diện", "Đã chuyển sang chế độ sáng");
-    }
-  };
 
   const handleLogout = async () => {
     confirm("Đăng xuất", "Bạn có chắc chắn muốn đăng xuất?", async () => {

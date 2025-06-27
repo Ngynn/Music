@@ -9,7 +9,7 @@ import {
   Image,
   ActivityIndicator,
   Dimensions,
-  RefreshControl, // ← THÊM
+  RefreshControl,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
@@ -20,7 +20,6 @@ import {
   query,
   where,
   getDocs,
-  getDoc,
   doc,
   updateDoc,
   serverTimestamp,
@@ -69,7 +68,7 @@ const MenuOptions: React.FC<MenuOptionsProps> = ({
 
   const router = useRouter();
   const { handleLike, isLiked } = useAudio();
-  const { showAlert, confirm, success, error } = useAlert(); // Thêm dòng này
+  const { showAlert, confirm, success, error } = useAlert();
 
   // Reset states khi modal đóng
   useEffect(() => {
@@ -88,7 +87,7 @@ const MenuOptions: React.FC<MenuOptionsProps> = ({
     const userId = auth.currentUser?.uid;
 
     if (!userId) {
-      console.error("❌ Không có người dùng đăng nhập");
+      console.error(" Không có người dùng đăng nhập");
       setUserPlaylists([]);
       setUserHasPlaylists(false);
       setCurrentUserId(null);
@@ -109,7 +108,7 @@ const MenuOptions: React.FC<MenuOptionsProps> = ({
     // lay playlist theo user id
     const playlistsQuery = query(
       collection(db, "playlists"),
-      where("userId", "==", userId) 
+      where("userId", "==", userId)
     );
 
     const unsubscribe = onSnapshot(
@@ -131,7 +130,7 @@ const MenuOptions: React.FC<MenuOptionsProps> = ({
             return;
           }
 
-         // 
+          //
           const playlistsWithSongs = await Promise.all(
             snapshot.docs.map(async (playlistDoc) => {
               try {
@@ -174,12 +173,12 @@ const MenuOptions: React.FC<MenuOptionsProps> = ({
           const validPlaylists = playlistsWithSongs.filter(Boolean);
 
           console.log(
-            `✅ Setting ${validPlaylists.length} valid playlists for user ${userId}`
+            ` Setting ${validPlaylists.length} valid playlists for user ${userId}`
           );
           setUserPlaylists(validPlaylists);
           setHasInitialFetch(true);
         } catch (err) {
-          console.error("❌ Lỗi khi lấy danh sách playlist:", err);
+          console.error(" Lỗi khi lấy danh sách playlist:", err);
           setUserHasPlaylists(false);
           setUserPlaylists([]);
           error("Lỗi", "Không thể tải danh sách playlist");
@@ -203,46 +202,9 @@ const MenuOptions: React.FC<MenuOptionsProps> = ({
     };
   }, [visible, hasInitialFetch]);
 
-  // ✅ FUNCTION KIỂM TRA USER CÓ PLAYLIST HAY KHÔNG
-  const checkUserHasPlaylists = useCallback(async (userId: string) => {
-    try {
-      console.log(`🔍 Checking if user ${userId} has playlists...`);
-
-      const playlistsQuery = query(
-        collection(db, "playlists"),
-        where("userId", "==", userId)
-      );
-
-      const snapshot = await getDocs(playlistsQuery);
-      const hasPlaylists = !snapshot.empty;
-
-      console.log(`📊 User has ${snapshot.docs.length} playlists`);
-      setUserHasPlaylists(hasPlaylists);
-
-      return hasPlaylists;
-    } catch (error) {
-      console.error("❌ Error checking user playlists:", error);
-      setUserHasPlaylists(false);
-      return false;
-    }
-  }, []);
-
-  // Tạo function để force refresh khi cần thiết
-  const forceRefreshPlaylists = useCallback(() => {
-    // Reset state để trigger real-time listener
-    setHasInitialFetch(false);
-    setUserPlaylists([]);
-
-    // Nếu cần, có thể restart listener
-    // Listener sẽ tự động fetch lại data mới
-  }, []);
-
   const handlePlaylistCreated = (playlistId: string) => {
     // Đóng menu
     onClose();
-
-    // Nếu cần force refresh (thường không cần vì real-time listener)
-    // forceRefreshPlaylists();
   };
 
   // Check if song exists in a playlist
@@ -270,14 +232,12 @@ const MenuOptions: React.FC<MenuOptionsProps> = ({
         return;
       }
 
-      // Thêm bài hát vào collection playlistSongs
       await addDoc(collection(db, "playlistSongs"), {
         playlistId: playlistId,
         songId: songId,
         addedAt: serverTimestamp(),
       });
 
-      // Cập nhật songCount trong playlist
       const playlistRef = doc(db, "playlists", playlistId);
       await updateDoc(playlistRef, {
         songCount: increment(1),
@@ -285,9 +245,6 @@ const MenuOptions: React.FC<MenuOptionsProps> = ({
       });
 
       success("Thành công", "Đã thêm bài hát vào playlist");
-
-      // ❌ XÓA DÒNG NÀY vì real-time listener sẽ tự động cập nhật
-      // await fetchUserPlaylists(true);
     } catch (err) {
       console.error("Lỗi khi thêm bài hát vào playlist:", err);
       error("Lỗi", "Không thể thêm bài hát vào playlist");
@@ -325,9 +282,6 @@ const MenuOptions: React.FC<MenuOptionsProps> = ({
       });
 
       success("Thành công", "Đã xóa bài hát khỏi playlist");
-
-      // ❌ XÓA DÒNG NÀY vì real-time listener sẽ tự động cập nhật
-      // await fetchUserPlaylists(true);
     } catch (err) {
       console.error("Lỗi khi xóa bài hát khỏi playlist:", err);
       error("Lỗi", "Không thể xóa bài hát khỏi playlist");
@@ -336,19 +290,18 @@ const MenuOptions: React.FC<MenuOptionsProps> = ({
     }
   };
 
-  // ✅ CẬP NHẬT TOGGLE PLAYLIST MODAL VỚI LOGIC THÔNG MINH
+  //  CẬP NHẬT TOGGLE PLAYLIST MODAL VỚI LOGIC THÔNG MINH
   const togglePlaylistModal = useCallback(() => {
     console.log(
       `🎯 togglePlaylistModal called. userHasPlaylists: ${userHasPlaylists}, userPlaylists.length: ${userPlaylists.length}`
     );
 
-    // Nếu đang hiển thị modal playlist, đóng nó
     if (showPlaylistModal) {
       setShowPlaylistModal(false);
       return;
     }
 
-    // ✅ KIỂM TRA USER CÓ PLAYLIST HAY KHÔNG
+    // KIỂM TRA USER CÓ PLAYLIST HAY KHÔNG
     if (userHasPlaylists === null) {
       // Vẫn đang check, hiển thị loading
       setIsLoading(true);
@@ -357,7 +310,7 @@ const MenuOptions: React.FC<MenuOptionsProps> = ({
     }
 
     if (userHasPlaylists === false || userPlaylists.length === 0) {
-      // ✅ USER KHÔNG CÓ PLAYLIST - THÔNG BÁO TẠO MỚI
+      //  USER KHÔNG CÓ PLAYLIST - THÔNG BÁO TẠO MỚI
       confirm(
         "Tạo playlist đầu tiên",
         "Bạn chưa có playlist nào. Bạn có muốn tạo playlist đầu tiên để thêm bài hát này không?",
@@ -373,7 +326,7 @@ const MenuOptions: React.FC<MenuOptionsProps> = ({
       return;
     }
 
-    // ✅ USER CÓ PLAYLIST - HIỂN THỊ DANH SÁCH
+    // USER CÓ PLAYLIST - HIỂN THỊ DANH SÁCH
     console.log(`📝 User has ${userPlaylists.length} playlists, showing list`);
     setShowPlaylistModal(true);
   }, [showPlaylistModal, userHasPlaylists, userPlaylists.length, confirm]);
@@ -417,14 +370,14 @@ const MenuOptions: React.FC<MenuOptionsProps> = ({
 
           {/* Option Buttons */}
           <View style={styles.optionsContainer}>
-            {/* ✅ CẬP NHẬT OPTION BUTTON VỚI TRẠNG THÁI */}
+            {/*  CẬP NHẬT OPTION BUTTON VỚI TRẠNG THÁI */}
             <TouchableOpacity
               style={[
                 styles.optionButton,
-                userHasPlaylists === null && styles.optionButtonLoading, // Loading state
+                userHasPlaylists === null && styles.optionButtonLoading,
               ]}
               onPress={togglePlaylistModal}
-              disabled={userHasPlaylists === null} // Disable khi đang check
+              disabled={userHasPlaylists === null}
             >
               <Icon
                 name="playlist-add"
@@ -517,7 +470,6 @@ const MenuOptions: React.FC<MenuOptionsProps> = ({
                       <RefreshControl
                         refreshing={isFetching}
                         onRefresh={() => {
-                          // Force refresh bằng cách reset state
                           setHasInitialFetch(false);
                           setUserPlaylists([]);
                         }}
@@ -545,9 +497,7 @@ const MenuOptions: React.FC<MenuOptionsProps> = ({
                                   handleRemoveFromPlaylist(item.id);
                                   setShowPlaylistModal(false);
                                 },
-                                () => {
-                                  // Người dùng chọn "Hủy" - không cần làm gì
-                                }
+                                () => {}
                               );
                             } else {
                               handleAddToPlaylist(item.id);

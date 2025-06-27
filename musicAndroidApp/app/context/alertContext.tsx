@@ -123,7 +123,6 @@ export const AlertProvider: React.FC<{ children: React.ReactNode }> = ({
         message={message}
         options={options}
         onClose={hideAlert}
-        // type={type}
       />
     </AlertContext.Provider>
   );

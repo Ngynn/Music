@@ -39,27 +39,35 @@ import { useAlert } from "../context/alertContext";
 const { width, height } = Dimensions.get("window");
 const NOTCH_HEIGHT = Platform.OS === "ios" ? 47 : 24;
 
-// Thêm hàm formatViewCount vào phần đầu file, sau khi khai báo constants
+interface Song {
+  id: string;
+  name: string;
+  artist?: string;
+  album?: string;
+  genre?: string;
+  img?: string;
+  audio?: string;
+  views?: number;
+  releaseYear?: string;
+  [key: string]: any;
+}
+
 const formatViewCount = (views: number): string => {
   if (!views && views !== 0) return "0";
 
   if (views >= 1_000_000_000) {
-    // Số tỷ (billion)
     return (views / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "B";
   } else if (views >= 1_000_000) {
-    // Số triệu (million)
     return (views / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
   } else if (views >= 1_000) {
-    // Số nghìn (thousand)
     return (views / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
   } else {
-    // Số nhỏ hơn 1000
     return views.toString();
   }
 };
 
 export default function Manage() {
-  const { confirm, prompt, success, error } = useAlert();
+  const { confirm, success, error } = useAlert();
   const [songs, setSongs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -116,7 +124,6 @@ export default function Manage() {
     }
   };
 
-  // Pull-to-refresh handler
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchSongs();
@@ -126,7 +133,6 @@ export default function Manage() {
     fetchSongs();
   }, [sortBy]);
 
-  // Filtered songs based on search query
   const filteredSongs = songs.filter(
     (song) =>
       song.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -136,28 +142,6 @@ export default function Manage() {
         song.album.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  // Delete song handler với confirm
-  const deleteSong = async (id: string, songName: string) => {
-    confirm(
-      "Xác nhận xóa",
-      `Bạn có chắc muốn xóa bài hát "${songName}"?`,
-      async () => {
-        setIsProcessing(true);
-        try {
-          await deleteDoc(doc(db, "song", id));
-          setSongs(songs.filter((song) => song.id !== id));
-          success("Thành công", "Bài hát đã được xóa!");
-        } catch (err) {
-          console.error("Lỗi khi xóa bài hát:", err);
-          error("Lỗi", "Không thể xóa bài hát. Vui lòng thử lại.");
-        } finally {
-          setIsProcessing(false);
-        }
-      }
-    );
-  };
-
-  // Start editing handler
   const startEditing = (song: any) => {
     setEditingSong(song);
     setNewName(song.name || "");
@@ -173,20 +157,25 @@ export default function Manage() {
     setShowEditModal(true);
   };
 
-  // Audio file picker handler với error thay cho Alert
+  // Audio file picker handler
   const handlePickAudio = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: "audio/mpeg",
+        type: ["audio/mpeg", "audio/mp3", "audio/*"],
         copyToCacheDirectory: true,
         multiple: false,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const file = result.assets[0];
+
+        if (file.size && file.size > 50 * 1024 * 1024) {
+          error("Lỗi", "File audio quá lớn. Vui lòng chọn file nhỏ hơn 50MB.");
+          return;
+        }
+
         setNewFileUri(file.uri);
 
-        // Calculate file size in MB
         if (file.size) {
           const fileSizeInMB = (file.size / (1024 * 1024)).toFixed(2);
           setNewFileInfo(`${file.name} (${fileSizeInMB} MB)`);
@@ -200,7 +189,6 @@ export default function Manage() {
     }
   };
 
-  // Image picker handler với error thay cho Alert
   const handlePickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -208,10 +196,21 @@ export default function Manage() {
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
+        base64: false,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        setNewImgUri(result.assets[0].uri);
+        const asset = result.assets[0];
+
+        if (asset.fileSize && asset.fileSize > 10 * 1024 * 1024) {
+          error(
+            "Lỗi",
+            "Hình ảnh quá lớn. Vui lòng chọn hình ảnh nhỏ hơn 10MB."
+          );
+          return;
+        }
+
+        setNewImgUri(asset.uri);
       }
     } catch (err) {
       console.error("Lỗi khi chọn hình ảnh:", err);
@@ -219,7 +218,7 @@ export default function Manage() {
     }
   };
 
-  // Save edit handler với error và success thay cho Alert
+  // Save edit handler
   const saveEdit = async () => {
     if (!editingSong || !newName) {
       error("Lỗi", "Tên bài hát không được để trống");
@@ -228,102 +227,143 @@ export default function Manage() {
 
     setIsModalProcessing(true);
     setUploadProgress(0);
+
     try {
       let uploadedAudioUrl = newAudio;
       let uploadedImgUrl = newImg;
 
-      // Upload audio if selected
       if (newFileUri) {
-        const formData = new FormData();
-        const safeFileName = newName.replace(/[^a-zA-Z0-9_]/g, "_");
+        try {
+          const formData = new FormData();
+          const safeFileName = newName.replace(/[^a-zA-Z0-9_\-]/g, "_");
+          const timestamp = Date.now();
+          const fileExtension =
+            newFileUri.split(".").pop()?.toLowerCase() || "mp3";
 
-        formData.append("file", {
-          uri: newFileUri,
-          type: "audio/mpeg",
-          name: `${safeFileName}.mp3`,
-        } as any);
-        formData.append("upload_preset", "mp3_unsigned");
+          formData.append("file", {
+            uri: newFileUri,
+            type: `audio/${fileExtension === "mp3" ? "mpeg" : fileExtension}`,
+            name: `${safeFileName}_${timestamp}.${fileExtension}`,
+          } as any);
 
-        // Add audio optimization parameters
-        formData.append("resource_type", "auto");
-        formData.append("audio_codec", "mp3");
-        formData.append("bit_rate", "192k");
-        formData.append("tags", `music,${newGenre},${newArtist}`);
+          formData.append("upload_preset", "mp3_unsigned");
+          formData.append("resource_type", "auto");
+          formData.append("quality", "auto:good");
+          formData.append("fetch_format", "auto");
 
-        const response = await axios.post(
-          "https://api.cloudinary.com/v1_1/dfn3a005q/upload",
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-            onUploadProgress: (progressEvent) => {
-              if (progressEvent.total) {
-                const percentCompleted = Math.round(
-                  (progressEvent.loaded * 100) / progressEvent.total
-                );
-                setUploadProgress(percentCompleted);
-              }
-            },
-          }
-        );
+          const response = await axios.post(
+            "https://api.cloudinary.com/v1_1/dfn3a005q/upload",
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+              onUploadProgress: (progressEvent) => {
+                if (progressEvent.total) {
+                  const percentCompleted = Math.round(
+                    (progressEvent.loaded * 50) / progressEvent.total
+                  );
+                  setUploadProgress(percentCompleted);
+                }
+              },
+              timeout: 120000,
+            }
+          );
 
-        // Optimize URL for better playback
-        uploadedAudioUrl = response.data.secure_url;
-        if (!uploadedAudioUrl.includes("fl_attachment")) {
-          uploadedAudioUrl = uploadedAudioUrl.replace(
-            "/upload/",
-            "/upload/fl_attachment,q_auto/"
+          uploadedAudioUrl = response.data.secure_url;
+        } catch (audioError) {
+          console.error("Audio upload error:", audioError);
+          throw new Error(
+            "Không thể tải lên file audio. Vui lòng kiểm tra định dạng file."
           );
         }
       }
 
-      // Upload image if selected
       if (newImgUri) {
-        setUploadProgress(0);
-        const formData = new FormData();
-        const safeFileName = newName.replace(/[^a-zA-Z0-9_]/g, "_");
+        try {
+          setUploadProgress(newFileUri ? 50 : 0);
 
-        formData.append("file", {
-          uri: newImgUri,
-          type: "image/jpeg",
-          name: `${safeFileName}_cover.jpg`,
-        } as any);
-        formData.append("upload_preset", "mp3_unsigned");
-        formData.append(
-          "transformation",
-          "c_fill,g_face,h_500,w_500,q_auto:good"
-        );
+          const formData = new FormData();
+          const safeFileName = newName.replace(/[^a-zA-Z0-9_\-]/g, "_");
+          const timestamp = Date.now();
+          const fileExtension =
+            newImgUri.split(".").pop()?.toLowerCase() || "jpg";
 
-        const response = await axios.post(
-          "https://api.cloudinary.com/v1_1/dfn3a005q/upload",
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-            onUploadProgress: (progressEvent) => {
-              if (progressEvent.total) {
-                const percentCompleted = Math.round(
-                  (progressEvent.loaded * 100) / progressEvent.total
+          const imageFile = {
+            uri: newImgUri,
+            type: `image/${fileExtension === "jpg" ? "jpeg" : fileExtension}`,
+            name: `${safeFileName}_cover_${timestamp}.${fileExtension}`,
+          };
+
+          formData.append("file", imageFile as any);
+          formData.append("upload_preset", "mp3_unsigned");
+          formData.append("resource_type", "image");
+
+          const response = await axios.post(
+            "https://api.cloudinary.com/v1_1/dfn3a005q/upload",
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+              onUploadProgress: (progressEvent) => {
+                if (progressEvent.total) {
+                  const baseProgress = newFileUri ? 50 : 0;
+                  const percentCompleted = Math.round(
+                    baseProgress +
+                      (progressEvent.loaded * (100 - baseProgress)) /
+                        progressEvent.total
+                  );
+                  setUploadProgress(percentCompleted);
+                }
+              },
+              timeout: 60000,
+            }
+          );
+
+          uploadedImgUrl = response.data.secure_url;
+        } catch (imageError) {
+          console.error("Image upload error:", imageError);
+
+          if (axios.isAxiosError(imageError)) {
+            if (imageError.response?.status === 400) {
+              const errorData = imageError.response.data;
+              if (errorData && errorData.error && errorData.error.message) {
+                throw new Error(
+                  `Lỗi upload hình ảnh: ${errorData.error.message}`
                 );
-                setUploadProgress(percentCompleted);
+              } else {
+                throw new Error(
+                  "Lỗi định dạng hình ảnh hoặc cấu hình upload preset."
+                );
               }
-            },
+            } else if (imageError.response?.status === 401) {
+              throw new Error(
+                "Lỗi xác thực. Vui lòng kiểm tra cấu hình Cloudinary."
+              );
+            } else if (imageError.response?.status === 413) {
+              throw new Error(
+                "Hình ảnh quá lớn. Vui lòng chọn hình ảnh nhỏ hơn."
+              );
+            }
           }
-        );
-        uploadedImgUrl = response.data.secure_url;
+
+          throw new Error("Không thể tải lên hình ảnh. Vui lòng thử lại.");
+        }
       }
 
       // Prepare updated data
       const updatedData: any = {};
-      if (newName) updatedData.name = newName;
-      if (uploadedAudioUrl) updatedData.audio = uploadedAudioUrl;
-      if (newArtist) updatedData.artist = newArtist;
-      if (newAlbum) updatedData.album = newAlbum;
+      if (newName.trim()) updatedData.name = newName.trim();
+      if (uploadedAudioUrl && uploadedAudioUrl !== newAudio)
+        updatedData.audio = uploadedAudioUrl;
+      if (newArtist.trim()) updatedData.artist = newArtist.trim();
+      if (newAlbum.trim()) updatedData.album = newAlbum.trim();
       if (newGenre) updatedData.genre = newGenre;
-      if (newReleaseYear) updatedData.releaseYear = newReleaseYear;
-      if (uploadedImgUrl) updatedData.img = uploadedImgUrl;
+      if (newReleaseYear.trim())
+        updatedData.releaseYear = newReleaseYear.trim();
+      if (uploadedImgUrl && uploadedImgUrl !== newImg)
+        updatedData.img = uploadedImgUrl;
 
       // Add updatedAt timestamp
       updatedData.updatedAt = new Date();
@@ -338,14 +378,32 @@ export default function Manage() {
         )
       );
 
-      // Reset form và hiển thị thông báo thành công
+      // Reset form and show success message
       resetEditForm();
       success("Thành công", "Bài hát đã được cập nhật!");
     } catch (err) {
       console.error("Lỗi khi chỉnh sửa bài hát:", err);
-      error("Lỗi", "Không thể cập nhật bài hát. Vui lòng thử lại.");
+
+      let errorMessage = "Không thể cập nhật bài hát. Vui lòng thử lại.";
+
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (axios.isAxiosError(err)) {
+        if (err.response?.status === 400) {
+          errorMessage =
+            "Lỗi định dạng file hoặc cấu hình tải lên. Vui lòng kiểm tra file và thử lại.";
+        } else if (err.response?.status === 413) {
+          errorMessage = "File quá lớn. Vui lòng chọn file nhỏ hơn.";
+        } else if (err.code === "ECONNABORTED") {
+          errorMessage =
+            "Quá thời gian tải lên. Vui lòng kiểm tra kết nối mạng.";
+        }
+      }
+
+      error("Lỗi", errorMessage);
     } finally {
       setIsModalProcessing(false);
+      setUploadProgress(0);
     }
   };
 
@@ -365,43 +423,92 @@ export default function Manage() {
     setShowEditModal(false);
   };
 
-  // Thay đổi menu action
-  const showActionMenu = (song: any, x: number, y: number) => {
-    setSelectedSongForMenu(song);
+  // Song item renderer
+  const renderSongItem = ({ item }: { item: Song }) => {
+    return (
+      <TouchableOpacity
+        style={styles.songItem}
+        activeOpacity={0.7}
+        onPress={() => startEditing(item)}
+      >
+        <Image
+          source={{ uri: item.img }}
+          style={styles.songImage}
+          defaultSource={require("../../assets/images/coverImg.jpg")}
+        />
 
-    // Sử dụng prompt thay cho menu overlay tùy chọn
-    prompt("Tùy chọn", `Bài hát: ${song.name}`, [
-      {
-        text: "Chỉnh sửa",
-        icon: "edit",
-        onPress: () => startEditing(song),
-      },
-      {
-        text: "Xóa",
-        icon: "delete",
-        style: "destructive",
-        onPress: () => deleteSong(song.id, song.name),
-      },
-      {
-        text: "Hủy",
-        style: "cancel",
-      },
-    ]);
+        <View style={styles.songDetails}>
+          <Text style={styles.songName} numberOfLines={1}>
+            {item.name}
+          </Text>
+          <Text style={styles.songArtist} numberOfLines={1}>
+            {item.artist || "Unknown Artist"}
+          </Text>
+          <View style={styles.songMeta}>
+            <Text style={styles.songGenre}>
+              {item.genre || "Unknown Genre"}
+            </Text>
+            {item.views !== undefined && (
+              <View style={styles.viewsContainer}>
+                <Icon
+                  name="visibility"
+                  size={14}
+                  color={COLORS.textSecondary}
+                />
+                <Text style={styles.songViews}>
+                  {formatViewCount(item.views)}
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={styles.moreButton}
+          onPress={(e) => {
+            e.stopPropagation();
+            showSongOptions(item);
+          }}
+        >
+          <Icon name="more-vert" size={24} color={COLORS.textSecondary} />
+        </TouchableOpacity>
+      </TouchableOpacity>
+    );
   };
 
-  // Đóng menu
-  const hideMenu = () => {
-    Animated.timing(menuAnimation, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => {
-      setShowMenu(false);
-      setSelectedSongForMenu(null);
-    });
+  // Show song options
+  const showSongOptions = (item: Song) => {
+    setSelectedSongForAction(item);
+    setShowActionSheet(true);
   };
 
-  // Component Custom Action Sheet
+  // Confirm delete
+  const confirmDelete = (item: Song) => {
+    confirm(
+      "Xác nhận xóa",
+      `Bạn có chắc muốn xóa bài hát "${item.name}"?`,
+      () => {
+        performDelete(item.id, item.name);
+      }
+    );
+  };
+
+  // Perform delete
+  const performDelete = async (id: string, songName: string) => {
+    setIsProcessing(true);
+    try {
+      await deleteDoc(doc(db, "song", id));
+      setSongs(songs.filter((song) => song.id !== id));
+      success("Thành công", "Bài hát đã được xóa!");
+    } catch (err) {
+      console.error("Lỗi khi xóa bài hát:", err);
+      error("Lỗi", "Không thể xóa bài hát. Vui lòng thử lại.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Custom Action Sheet Component
   const CustomActionSheet = () => (
     <Modal
       visible={showActionSheet}
@@ -470,110 +577,6 @@ export default function Manage() {
     </Modal>
   );
 
-  // Thêm định nghĩa interface cho Song
-  interface Song {
-    id: string;
-    name: string;
-    artist?: string;
-    album?: string;
-    genre?: string;
-    img?: string;
-    audio?: string;
-    views?: number;
-    releaseYear?: string;
-    [key: string]: any; // Cho phép các thuộc tính khác
-  }
-
-  // ✅ RENDERITEM ĐƠN GIẢN - CHỈ MỞ EDIT KHI NHẤN
-  const renderSongItem = ({ item }: { item: Song }) => {
-    return (
-      <TouchableOpacity
-        style={styles.songItem}
-        activeOpacity={0.7}
-        onPress={() => startEditing(item)} // ← Quay lại edit khi nhấn
-      >
-        <Image
-          source={{ uri: item.img }}
-          style={styles.songImage}
-          defaultSource={require("../../assets/images/coverImg.jpg")}
-        />
-
-        <View style={styles.songDetails}>
-          <Text style={styles.songName} numberOfLines={1}>
-            {item.name}
-          </Text>
-          <Text style={styles.songArtist} numberOfLines={1}>
-            {item.artist || "Unknown Artist"}
-          </Text>
-          <View style={styles.songMeta}>
-            <Text style={styles.songGenre}>
-              {item.genre || "Unknown Genre"}
-            </Text>
-            {item.views !== undefined && (
-              <View style={styles.viewsContainer}>
-                <Icon
-                  name="visibility"
-                  size={14}
-                  color={COLORS.textSecondary}
-                />
-                <Text style={styles.songViews}>
-                  {formatViewCount(item.views)}
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-
-        <TouchableOpacity
-          style={styles.moreButton}
-          onPress={(e) => {
-            e.stopPropagation();
-            showSongOptions(item);
-          }}
-        >
-          <Icon name="more-vert" size={24} color={COLORS.textSecondary} />
-        </TouchableOpacity>
-      </TouchableOpacity>
-    );
-  };
-
-  // Cập nhật function showSongOptions
-  const showSongOptions = (item: Song) => {
-    setSelectedSongForAction(item);
-    setShowActionSheet(true);
-  };
-
-  // Function riêng để confirm delete
-  const confirmDelete = (item: Song) => {
-    confirm(
-      "Xác nhận xóa",
-      `Bạn có chắc muốn xóa bài hát "${item.name}"?`,
-      () => {
-        // Callback khi user chọn "Có"
-        performDelete(item.id, item.name);
-      },
-      () => {
-        // Callback khi user chọn "Không" - có thể để trống
-        console.log("User cancelled delete");
-      }
-    );
-  };
-
-  // Function thực hiện xóa
-  const performDelete = async (id: string, songName: string) => {
-    setIsProcessing(true);
-    try {
-      await deleteDoc(doc(db, "song", id));
-      setSongs(songs.filter((song) => song.id !== id));
-      success("Thành công", "Bài hát đã được xóa!");
-    } catch (err) {
-      console.error("Lỗi khi xóa bài hát:", err);
-      error("Lỗi", "Không thể xóa bài hát. Vui lòng thử lại.");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   return (
     <SafeAreaView style={[styles.safeArea, { paddingTop: NOTCH_HEIGHT }]}>
       <View style={styles.container}>
@@ -621,7 +624,7 @@ export default function Manage() {
                 onValueChange={(value) => setSortBy(value)}
                 style={styles.sortPicker}
                 dropdownIconColor={COLORS.text}
-                itemStyle={{ height: 160 }} // Tăng chiều cao của item picker
+                itemStyle={{ height: 160 }}
               >
                 <Picker.Item label="Tên" value="name" />
                 <Picker.Item label="Nghệ sĩ" value="artist" />
@@ -743,7 +746,7 @@ export default function Manage() {
                   </View>
                 ) : (
                   <ScrollView style={styles.modalScroll}>
-                    {/* Form Preview with Song Image - Điều chỉnh vị trí */}
+                    {/* Form Preview with Song Image */}
                     <View style={styles.formPreview}>
                       <Image
                         source={{
@@ -824,7 +827,7 @@ export default function Manage() {
                           selectedValue={newGenre}
                           onValueChange={(value) => setNewGenre(value)}
                           style={styles.genrePicker}
-                          itemStyle={{ height: 160 }} // Tăng chiều cao cho Android
+                          itemStyle={{ height: 160 }}
                         >
                           <Picker.Item label="Chọn thể loại" value="" />
                           <Picker.Item label="Rap" value="Rap" />
@@ -1116,7 +1119,6 @@ const styles = StyleSheet.create({
   modalSafeArea: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
-    // Không dùng paddingTop ở đây nữa mà sẽ dùng giá trị NOTCH_HEIGHT
   },
   modalContainer: {
     flex: 1,

@@ -37,7 +37,6 @@ import { useAlert } from "../context/alertContext";
 
 const { width } = Dimensions.get("window");
 
-// Thêm format number function để định dạng số
 const formatNumber = (num: number): string => {
   if (!num && num !== 0) return "0";
   if (num >= 1_000_000)
@@ -55,7 +54,7 @@ interface Song {
   views?: number;
   album?: string;
   duration?: number;
-  [key: string]: any; // For any additional fields
+  [key: string]: any;
 }
 
 export default function Home() {
@@ -101,7 +100,6 @@ export default function Home() {
     seekToPosition,
     setCurrentlyPlaying,
     setCurrentSongList,
-    playbackMode,
     togglePlaybackMode,
     currentSongId,
     isCurrentlyPlayingSong,
@@ -234,11 +232,10 @@ export default function Home() {
         });
       });
 
-      // Thay Alert.alert bằng success
       success("Thành công", "Đã thêm bài hát vào playlist");
     } catch (err) {
       console.error("Lỗi khi thêm bài hát vào playlist:", err);
-      // Thay Alert.alert bằng error
+
       error("Lỗi", "Không thể thêm bài hát vào playlist");
     }
   };
@@ -285,11 +282,9 @@ export default function Home() {
         });
       });
 
-      // Thay Alert.alert bằng success
       success("Thành công", "Đã xóa bài hát khỏi playlist");
     } catch (err) {
       console.error("Lỗi khi xóa bài hát khỏi playlist:", err);
-      // Thay Alert.alert bằng error
       error("Lỗi", "Không thể xóa bài hát khỏi playlist");
     }
   };
@@ -322,9 +317,7 @@ export default function Home() {
         sorted.sort((a, b) => b.name.localeCompare(a.name));
       }
       setSortDirections((prev) => ({ ...prev, name: newDirection }));
-    } 
-    
-    else if (type === "artist") {
+    } else if (type === "artist") {
       // loc theo ten artist
       newDirection = sortDirections.artist === "asc" ? "desc" : "asc";
       if (newDirection === "asc") {
@@ -333,10 +326,8 @@ export default function Home() {
         sorted.sort((a, b) => b.artist.localeCompare(a.artist));
       }
       setSortDirections((prev) => ({ ...prev, artist: newDirection }));
-    } 
-    
-    else if (type === "views") {
-      // loc theo so luong view 
+    } else if (type === "views") {
+      // loc theo so luong view
       newDirection = sortDirections.views === "desc" ? "asc" : "desc";
       if (newDirection === "desc") {
         sorted.sort((a, b) => (b.views || 0) - (a.views || 0));
@@ -344,18 +335,15 @@ export default function Home() {
         sorted.sort((a, b) => (a.views || 0) - (b.views || 0));
       }
       setSortDirections((prev) => ({ ...prev, views: newDirection }));
-    } 
-    
-    else {
+    } else {
       console.warn(`Unknown sort type: ${type}`);
-      return; 
+      return;
     }
 
     setSortedSongs(sorted);
     setSortOption(`${type}_${newDirection}`);
     setCurrentSongList(sorted);
 
-    // ✅ THÔNG BÁO NGẮN GỌN
     const getDirectionText = (dir: "asc" | "desc") =>
       dir === "asc" ? "A→Z" : "Z→A";
     const getViewsDirectionText = (dir: "asc" | "desc") =>
@@ -370,7 +358,7 @@ export default function Home() {
     success("Đã sắp xếp", messages[type] || "Đã sắp xếp");
   };
 
-  // ham hien thi cac option 
+  // ham hien thi cac option
   const showSortOptions = () => {
     const getNextDirection = (type: string, current: string) => {
       if (type === "views") {
@@ -379,7 +367,6 @@ export default function Home() {
       return current === "asc" ? "desc" : "asc";
     };
 
-    // lay bieu tuong len xuong tuong trung cho sap xep theo luot xem
     const getDirectionIcon = (type: string, direction: string) => {
       if (type === "views") {
         return direction === "desc" ? "↓" : "↑";
@@ -410,7 +397,7 @@ export default function Home() {
         onPress: () => sortSongs("views"),
       },
       {
-        text: "❌ Hủy",
+        text: " Hủy",
         style: "cancel",
       },
     ]);
@@ -498,7 +485,6 @@ export default function Home() {
       { text: "Hủy", style: "cancel" },
     ]);
   };
-
 
   // chia se bai hat
   const shareSong = (songId: string) => {
@@ -642,7 +628,6 @@ export default function Home() {
           duration={duration}
           currentPosition={currentPosition}
           isRepeat={isRepeat}
-          playbackMode={playbackMode}
           onClose={() => setShowPlayer(false)}
           onPlayPause={pauseOrResume}
           onNext={playNext}

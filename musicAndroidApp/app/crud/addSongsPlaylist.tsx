@@ -26,9 +26,8 @@ import {
 import { db } from "../../firebaseConfig";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { COLORS, SIZES } from "../constants/theme";
-import { useAlert } from "../context/alertContext"; // ✅ THÊM IMPORT
+import { useAlert } from "../context/alertContext";
 
-// Lấy width của màn hình
 const { width } = Dimensions.get("window");
 
 interface Song {
@@ -115,7 +114,7 @@ export default function AddSongsPlaylist() {
     };
 
     fetchPlaylistAndSongs();
-  }, [playlistId, error]); // error tránh eslint warning
+  }, [playlistId, error]);
 
   useEffect(() => {
     if (searchText.trim()) {
@@ -170,7 +169,7 @@ export default function AddSongsPlaylist() {
           }
         },
         () => {
-          // Callback khi user hủy - không cần làm gì
+          // Callback khi user hủy
           console.log("User cancelled adding song");
         }
       );
@@ -180,18 +179,14 @@ export default function AddSongsPlaylist() {
     }
   };
 
-  // function xử lý quay lại với confirm nếu có thay đổi
   const handleBackPress = () => {
     if (searchText.trim()) {
-      // Nếu đang có text tìm kiếm, xóa text trước
       setSearchText("");
     } else {
-      // Nếu không có thay đổi gì, quay lại luôn
       router.back();
     }
   };
 
-  // function xử lý xóa tìm kiếm với confirm
   const handleClearSearch = () => {
     if (filteredSongs.length < allSongs.length && filteredSongs.length > 0) {
       confirm(
@@ -206,7 +201,7 @@ export default function AddSongsPlaylist() {
     }
   };
 
-  // 
+  //
   const renderSongItem = ({ item }: { item: Song }) => (
     <View style={styles.songItem}>
       <Image source={{ uri: item.img }} style={styles.songImage} />
@@ -239,7 +234,7 @@ export default function AddSongsPlaylist() {
           playlistSongIds.has(item.id) && styles.addedButton,
         ]}
         onPress={() => addSongToPlaylist(item)}
-        disabled={playlistSongIds.has(item.id)} 
+        disabled={playlistSongIds.has(item.id)}
       >
         <Icon
           name={playlistSongIds.has(item.id) ? "check" : "add"}
@@ -250,7 +245,6 @@ export default function AddSongsPlaylist() {
     </View>
   );
 
-  // ✅ THÊM: Render empty state với nhiều thông tin hơn
   const renderEmptyState = () => {
     if (loading) return null;
 
@@ -302,10 +296,7 @@ export default function AddSongsPlaylist() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={handleBackPress} 
-          style={styles.backButton}
-        >
+        <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
           <Icon name="arrow-back" size={24} color={COLORS.text} />
         </TouchableOpacity>
 
@@ -349,7 +340,7 @@ export default function AddSongsPlaylist() {
         />
         {searchText.length > 0 && (
           <TouchableOpacity
-            onPress={handleClearSearch} 
+            onPress={handleClearSearch}
             style={styles.clearButton}
           >
             <Icon name="close" size={20} color={COLORS.textSecondary} />
@@ -382,7 +373,7 @@ export default function AddSongsPlaylist() {
           maxToRenderPerBatch={10}
           windowSize={10}
           getItemLayout={(data, index) => ({
-            length: 75, 
+            length: 75,
             offset: 75 * index,
             index,
           })}
@@ -403,7 +394,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: COLORS.background,
   },
-  // Loading text style
+
   loadingText: {
     marginTop: 16,
     fontSize: SIZES.md,
@@ -438,7 +429,7 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     marginTop: 2,
   },
-  // Info button style
+
   infoButton: {
     width: 40,
     height: 40,
@@ -541,7 +532,7 @@ const styles = StyleSheet.create({
     marginLeft: SIZES.sm,
   },
   addedButton: {
-    backgroundColor: COLORS.primary + "30", // Alpha transparency for the primary color
+    backgroundColor: COLORS.primary + "30",
   },
   emptyContainer: {
     flex: 1,
@@ -549,7 +540,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: SIZES.xl,
   },
-  // Empty state styles
+
   emptyTitle: {
     fontSize: SIZES.lg,
     fontWeight: "bold",

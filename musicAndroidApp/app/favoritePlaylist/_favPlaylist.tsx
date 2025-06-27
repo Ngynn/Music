@@ -8,8 +8,8 @@ import {
   Image,
   ActivityIndicator,
   Dimensions,
-  SafeAreaView, 
-  StatusBar, 
+  SafeAreaView,
+  StatusBar,
   Platform,
 } from "react-native";
 import { doc, getDoc } from "firebase/firestore";
@@ -61,8 +61,6 @@ export default function Favorites() {
     setCurrentlyPlaying,
     setCurrentSongList,
     togglePlaybackMode,
-    playbackMode,
-    currentSongId,
     isCurrentlyPlayingSong,
   } = useAudio();
 
@@ -124,22 +122,6 @@ export default function Favorites() {
 
     fetchFavoriteSongs();
   }, [likedSongs, isLoggedIn]);
-
-  // if (!isLoggedIn) {
-  //   return (
-  //     <View style={styles.container}>
-  //       <View style={styles.messageContainer}>
-  //         <Icon name="account-circle" size={80} color={COLORS.textSecondary} />
-  //         <Text style={styles.messageTitle}>
-  //           Đăng nhập để xem bài hát yêu thích
-  //         </Text>
-  //         <Text style={styles.messageText}>
-  //           Hãy đăng nhập để lưu và xem danh sách bài hát yêu thích của bạn.
-  //         </Text>
-  //       </View>
-  //     </View>
-  //   );
-  // }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -291,7 +273,6 @@ export default function Favorites() {
           duration={duration}
           currentPosition={currentPosition}
           isRepeat={isRepeat}
-          playbackMode={playbackMode}
           onClose={() => setShowPlayer(false)}
           onPlayPause={pauseOrResume}
           onNext={playNext}

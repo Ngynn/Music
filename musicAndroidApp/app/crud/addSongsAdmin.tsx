@@ -24,8 +24,6 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 
 export default function AddSong() {
   const [name, setName] = useState("");
-  const [audio, setAudio] = useState("");
-  const [songs, setSongs] = useState<any[]>([]);
   const [artist, setArtist] = useState("");
   const [album, setAlbum] = useState("");
   const [genre, setGenre] = useState("");
@@ -35,25 +33,13 @@ export default function AddSong() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Thêm state mới cho quản lý quá trình tải lên
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [fileSize, setFileSize] = useState<string | null>(null);
-  const [audioQuality, setAudioQuality] = useState<string>("192k");
   const [isUploading, setIsUploading] = useState(false);
   const [currentAction, setCurrentAction] = useState<string>("");
 
   const DEFAULT_IMAGE = "https://via.placeholder.com/150";
 
-  const fetchSongs = async () => {
-    const snapshot = await getDocs(collection(db, "song"));
-    const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    setSongs(data);
-  };
-
   useEffect(() => {
-    fetchSongs();
-
-    // Kiểm tra quyền truy cập
     (async () => {
       if (Platform.OS !== "web") {
         const { status } =
@@ -68,7 +54,7 @@ export default function AddSong() {
     })();
   }, []);
 
-  // Nâng cấp hàm để chọn file MP3 và kiểm tra chi tiết
+  // Tối ưu hàm chọn file MP3 với kiểm tra định dạng và kích thước
   const handlePickFile = async () => {
     setIsLoading(true);
     try {
@@ -153,7 +139,6 @@ export default function AddSong() {
       if (!result.canceled) {
         setImgUri(result.assets[0].uri);
 
-        // Kiểm tra kích thước ảnh
         const asset = result.assets[0];
         if (asset.width && asset.height) {
           if (asset.width < 300 || asset.height < 300) {
@@ -178,8 +163,7 @@ export default function AddSong() {
     }
   };
 
-  // Tối ưu quá trình upload với theo dõi tiến trình và tham số chất lượng
-  // Phần upload MP3 lên Cloudinary - Chỉnh sửa cho phiên bản miễn phí
+  // Phần upload MP3 lên Cloudinary
   const handleAddSong = async () => {
     if (!name || !fileUri || !genre) {
       Alert.alert(
@@ -189,13 +173,13 @@ export default function AddSong() {
       return;
     }
 
-    // Kiểm tra kích thước file - Phiên bản miễn phí có giới hạn 10MB/file
+    // Kiểm tra kích thước file - giới hạn 10MB/file
     if (fileSize) {
       const sizeInMB = parseFloat(fileSize.replace(" MB", ""));
-      if (sizeInMB > 10) {
+      if (sizeInMB > 20) {
         Alert.alert(
           "File quá lớn",
-          "Phiên bản miễn phí của Cloudinary chỉ hỗ trợ file tối đa 10MB. Vui lòng chọn file nhỏ hơn.",
+          "Phiên bản chỉ hỗ trợ file tối đa 20MB. Vui lòng chọn file nhỏ hơn.",
           [{ text: "OK" }]
         );
         return;
@@ -204,17 +188,15 @@ export default function AddSong() {
 
     setIsLoading(true);
     setIsUploading(true);
-    setUploadProgress(0);
 
     try {
-      // 1. Xử lý tên file an toàn (loại bỏ ký tự đặc biệt)
+      // 1. Xử lý tên file (loại bỏ ký tự đặc biệt)
       const safeFileName = name.replace(/[^a-zA-Z0-9_]/g, "_");
 
-      // 2. Upload file MP3 lên Cloudinary với cấu hình phiên bản miễn phí
+      // 2. Upload file MP3 lên Cloudinary
       setCurrentAction("Đang tải file âm thanh lên máy chủ...");
       const formData = new FormData();
 
-      // Đây là cách đính kèm file phổ biến nhất
       formData.append("file", {
         uri:
           Platform.OS === "android" ? fileUri : fileUri.replace("file://", ""),
@@ -222,17 +204,10 @@ export default function AddSong() {
         name: `${safeFileName}.mp3`,
       } as any);
 
-      // Tham số upload preset - đảm bảo preset này được cấu hình là "unsigned" trong Cloudinary
       formData.append("upload_preset", "mp3_unsigned");
 
-      // Giảm bớt tham số không cần thiết cho phiên bản miễn phí
       formData.append("resource_type", "auto");
 
-      // Không gửi tham số audio_codec và bit_rate - có thể bị từ chối trong phiên bản miễn phí
-      // formData.append("audio_codec", "mp3");
-      // formData.append("bit_rate", audioQuality);
-
-      // Chỉ thêm một số metadata cơ bản
       formData.append("public_id", `songs/${safeFileName}`); // Chỉ định ID công khai để dễ quản lý
 
       // Upload với theo dõi tiến trình và xử lý lỗi cẩn thận
@@ -244,25 +219,15 @@ export default function AddSong() {
             headers: {
               "Content-Type": "multipart/form-data",
             },
-            onUploadProgress: (progressEvent) => {
-              if (progressEvent.total) {
-                const percentCompleted = Math.round(
-                  (progressEvent.loaded * 100) / progressEvent.total
-                );
-                setUploadProgress(percentCompleted);
-              }
-            },
           }
         );
 
-        // Lấy URL cơ bản từ response
         const audioUrl = response.data.secure_url;
 
-        // 3. Upload hình ảnh - giữ đơn giản cho phiên bản miễn phí
+        // 3. Upload hình ảnh
         let imgUrl = DEFAULT_IMAGE;
         if (imgUri) {
           setCurrentAction("Đang tải hình ảnh bìa lên máy chủ...");
-          setUploadProgress(0);
 
           const imgFormData = new FormData();
           imgFormData.append("file", {
@@ -285,14 +250,6 @@ export default function AddSong() {
                 headers: {
                   "Content-Type": "multipart/form-data",
                 },
-                onUploadProgress: (progressEvent) => {
-                  if (progressEvent.total) {
-                    const percentCompleted = Math.round(
-                      (progressEvent.loaded * 100) / progressEvent.total
-                    );
-                    setUploadProgress(percentCompleted);
-                  }
-                },
               }
             );
 
@@ -300,7 +257,6 @@ export default function AddSong() {
           } catch (imgError: any) {
             console.error("Lỗi upload hình ảnh:", imgError);
 
-            // Hiển thị lỗi nhưng vẫn tiếp tục với bài hát
             Alert.alert(
               "Lỗi hình ảnh",
               "Không thể tải lên hình ảnh. Bài hát sẽ sử dụng hình ảnh mặc định.",
@@ -322,15 +278,11 @@ export default function AddSong() {
           createdAt: new Date(),
           views: 0,
           likes: 0,
-          // Thêm một số metadata hữu ích
-          fileSize,
-          uploadedBy: "admin",
         });
 
         // 5. Thông báo thành công và reset form
         Alert.alert("Thành công", "Bài hát đã được thêm vào thư viện");
         setName("");
-        setAudio("");
         setArtist("");
         setAlbum("");
         setGenre("");
@@ -339,14 +291,11 @@ export default function AddSong() {
         setImgUri(null);
         setFileName(null);
         setFileSize(null);
-        // setAudioQuality("192k");
 
-        fetchSongs();
         router.push("../manage");
       } catch (uploadError: any) {
         console.error("Lỗi upload:", uploadError);
 
-        // Xử lý lỗi chi tiết và cụ thể hơn cho Cloudinary
         let errorMessage = "Không thể upload file lên máy chủ.";
         let errorDetails = "";
 
@@ -356,7 +305,6 @@ export default function AddSong() {
             JSON.stringify(uploadError.response.data, null, 2)
           );
 
-          // Cloudinary thường trả về lỗi trong response.data.error
           if (uploadError.response.data && uploadError.response.data.error) {
             if (typeof uploadError.response.data.error === "object") {
               errorDetails =
@@ -365,9 +313,7 @@ export default function AddSong() {
             } else {
               errorDetails = uploadError.response.data.error;
             }
-          }
-          // Các lỗi HTTP cụ thể
-          else if (uploadError.response.status === 400) {
+          } else if (uploadError.response.status === 400) {
             errorDetails =
               "Yêu cầu không hợp lệ. Kiểm tra kích thước file và định dạng.";
           } else if (uploadError.response.status === 401) {
@@ -380,7 +326,6 @@ export default function AddSong() {
             errorDetails = "Lỗi máy chủ Cloudinary. Vui lòng thử lại sau.";
           }
         } else if (uploadError.message) {
-          // Lỗi từ Axios hoặc lỗi JS
           if (uploadError.message.includes("Network Error")) {
             errorDetails =
               "Lỗi kết nối mạng. Kiểm tra kết nối internet của bạn.";
@@ -407,10 +352,8 @@ export default function AddSong() {
     }
   };
 
-  // Cập nhật phần return trong component để có header tốt hơn
   return (
     <View style={{ flex: 1, backgroundColor: COLORS?.background || "#f5f5f5" }}>
-      {/* Header cải tiến với nút quay lại rõ ràng hơn */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -424,9 +367,6 @@ export default function AddSong() {
       </View>
 
       <ScrollView style={styles.container}>
-        {/* Bỏ phần title và header cũ */}
-
-        {/* Form Fields - Giữ nguyên */}
         <View style={styles.formGroup}>
           <Text style={styles.label}>Tên bài hát *</Text>
           <TextInput
@@ -460,17 +400,15 @@ export default function AddSong() {
           />
         </View>
 
-        {/* Cập nhật phần JSX cho Picker */}
         <View style={styles.formGroup}>
           <Text style={styles.label}>Thể loại *</Text>
           <View style={styles.pickerContainer}>
             {Platform.OS === "ios" ? (
-              // iOS Picker được tối ưu riêng
               <Picker
                 selectedValue={genre}
                 onValueChange={(itemValue: string) => setGenre(itemValue)}
                 style={styles.picker}
-                itemStyle={{ fontSize: 16, height: 120 }} // Cải thiện hiển thị trên iOS
+                itemStyle={{ fontSize: 16, height: 120 }}
               >
                 <Picker.Item label="Chọn thể loại" value="" />
                 <Picker.Item label="Rap" value="Rap" />
@@ -481,13 +419,12 @@ export default function AddSong() {
                 <Picker.Item label="EDM" value="EDM" />
               </Picker>
             ) : (
-              // Android Picker được tối ưu riêng
               <Picker
                 selectedValue={genre}
                 onValueChange={(itemValue: string) => setGenre(itemValue)}
-                style={styles.androidPicker} // Sử dụng style riêng cho Android
+                style={styles.androidPicker}
                 dropdownIconColor={COLORS?.text || "#000"}
-                mode="dropdown" // Đảm bảo hiển thị dạng dropdown trên Android
+                mode="dropdown"
               >
                 <Picker.Item label="Chọn thể loại" value="" />
                 <Picker.Item label="Rap" value="Rap" />
@@ -513,29 +450,6 @@ export default function AddSong() {
             maxLength={4}
           />
         </View>
-
-        {/* Chất lượng âm thanh */}
-        {/* <View style={styles.formGroup}>
-          <Text style={styles.label}>Chất lượng âm thanh</Text>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={audioQuality}
-              onValueChange={(itemValue: string) => setAudioQuality(itemValue)}
-              style={styles.picker}
-            >
-              <Picker.Item label="Cao (320kbps)" value="320k" />
-              <Picker.Item label="Trung bình (192kbps)" value="192k" />
-              <Picker.Item label="Tiêu chuẩn (128kbps)" value="128k" />
-            </Picker>
-          </View>
-          <Text style={styles.helperText}>
-            {audioQuality === "320k"
-              ? "Chất lượng cao nhất, kích thước file lớn"
-              : audioQuality === "192k"
-              ? "Cân bằng giữa chất lượng và kích thước"
-              : "Kích thước nhỏ nhất, phù hợp với kết nối chậm"}
-          </Text>
-        </View> */}
 
         {/* File MP3 */}
         <View style={styles.formGroup}>
@@ -593,7 +507,7 @@ export default function AddSong() {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Loading Overlay */}
+      {/* Loading Overlay -- lỗi % */}
       {isLoading && (
         <View style={styles.loadingOverlay}>
           <View style={styles.loadingContainer}>
@@ -604,20 +518,6 @@ export default function AddSong() {
             <Text style={styles.loadingText}>
               {currentAction || "Đang xử lý..."}
             </Text>
-
-            {isUploading && (
-              <View style={styles.progressContainer}>
-                <View style={styles.progressBar}>
-                  <View
-                    style={[
-                      styles.progressFill,
-                      { width: `${uploadProgress}%` },
-                    ]}
-                  />
-                </View>
-                <Text style={styles.progressText}>{uploadProgress}%</Text>
-              </View>
-            )}
           </View>
         </View>
       )}
@@ -625,27 +525,24 @@ export default function AddSong() {
   );
 }
 
-// Nâng cấp StyleSheet với thiết kế hiện đại và UX tốt hơn
 const styles = StyleSheet.create({
   container: {
     padding: 16,
   },
   header: {
-    marginTop: Platform.OS === "android" ? 15 : 0, // Đệm thêm cho Android status bar
+    marginTop: Platform.OS === "android" ? 15 : 0,
     marginBottom: 20,
     flexDirection: "row",
     alignItems: "center",
-    paddingTop: Platform.OS === "android" ? 25 : 0, // Đệm thêm cho Android status bar
+    paddingTop: Platform.OS === "android" ? 25 : 0,
     paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: COLORS?.divider || "#ddd",
-    backgroundColor: COLORS?.cardBg || "#fff", // Thêm background color cho header
+    backgroundColor: COLORS?.cardBg || "#fff",
   },
   backButton: {
     padding: 10,
     borderRadius: 8,
-    // Xóa bỏ backgroundColor cố định
-    // backgroundColor: "#f0f0f0", <- Xóa dòng này
     flexDirection: "row",
     alignItems: "center",
   },
@@ -653,7 +550,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 16,
     marginLeft: 8,
-    color: COLORS?.text || "#000", // Thêm màu text phù hợp
+    color: COLORS?.text || "#000",
   },
   headerTitle: {
     fontSize: 24,
@@ -685,16 +582,16 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     borderRadius: 8,
     backgroundColor: COLORS?.cardBg || "#fff",
-    // Thêm height để đảm bảo đủ không gian hiển thị
-    minHeight: 50, // Tăng chiều cao tối thiểu
-    justifyContent: "center", // Căn giữa nội dung theo chiều dọc
-    paddingHorizontal: Platform.OS === "ios" ? 8 : 0, // Thêm padding cho iOS
+
+    minHeight: 50,
+    justifyContent: "center",
+    paddingHorizontal: Platform.OS === "ios" ? 8 : 0,
   },
   picker: {
     color: COLORS?.text || "#000",
-    width: "100%", // Đảm bảo chiều rộng tối đa
-    height: Platform.OS === "ios" ? 180 : 50, // Chiều cao khác nhau cho iOS và Android
-    // Thêm style cho iOS
+    width: "100%",
+    height: Platform.OS === "ios" ? 180 : 50,
+
     ...Platform.select({
       ios: {
         inputIOS: {
@@ -703,7 +600,6 @@ const styles = StyleSheet.create({
         },
       },
       android: {
-        // Android style
         inputAndroid: {
           paddingHorizontal: 10,
           paddingVertical: 8,
@@ -799,27 +695,6 @@ const styles = StyleSheet.create({
     color: COLORS?.text || "#000",
     fontSize: 16,
     fontWeight: "500",
-    textAlign: "center",
-  },
-  progressContainer: {
-    width: "100%",
-    marginTop: 15,
-  },
-  progressBar: {
-    height: 8,
-    backgroundColor: "#e0e0e0",
-    borderRadius: 4,
-    overflow: "hidden",
-    width: "100%",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: COLORS?.primary || "#1DB954",
-  },
-  progressText: {
-    marginTop: 5,
-    fontSize: 14,
-    color: COLORS?.text || "#000",
     textAlign: "center",
   },
 });

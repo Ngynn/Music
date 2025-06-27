@@ -52,14 +52,12 @@ interface EditUserData {
   email: string;
   role: "user" | "admin";
   phoneNumber: string;
-  // BỎ isActive
 }
 
 interface UserStats {
   totalUsers: number;
   adminUsers: number;
   totalLikedSongs: number;
-  // BỎ activeUsers
 }
 
 export default function AdminUsers() {
@@ -313,7 +311,7 @@ export default function AdminUsers() {
     );
   };
 
-  // 
+  //
   const renderUserItem = ({ item }: { item: User }) => (
     <TouchableOpacity
       style={styles.userCard}
@@ -412,17 +410,17 @@ export default function AdminUsers() {
         )}
 
         {/* Disable or hide the delete button for admin */}
-      {item.role !== "admin" && (
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={(e) => {
-            e.stopPropagation();
-            deleteUserAccount(item);
-          }}
-        >
-          <Icon name="delete" size={20} color={COLORS.error} />
-        </TouchableOpacity>
-      )}
+        {item.role !== "admin" && (
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={(e) => {
+              e.stopPropagation();
+              deleteUserAccount(item);
+            }}
+          >
+            <Icon name="delete" size={20} color={COLORS.error} />
+          </TouchableOpacity>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -582,8 +580,6 @@ export default function AdminUsers() {
                 </Text>
               </View>
 
-              {/* BỎ trạng thái field */}
-
               <View style={styles.detailItem}>
                 <Text style={styles.detailLabel}>Bài hát yêu thích:</Text>
                 <Text style={styles.detailValue}>
@@ -697,8 +693,6 @@ export default function AdminUsers() {
               ))}
             </View>
           </View>
-
-          {/* BỎ switch trạng thái hoạt động */}
         </ScrollView>
       </SafeAreaView>
     </Modal>

@@ -9,8 +9,6 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
-  Modal,
   Dimensions,
   SafeAreaView,
   StatusBar,
@@ -37,7 +35,7 @@ import { useAudio } from "../context/audioContext";
 import { COLORS, SIZES } from "../constants/theme";
 import ModalPlayer from "../components/modalPlayer";
 import MiniPlayer from "../components/miniPlayer";
-import { useAlert } from "../context/alertContext"; 
+import { useAlert } from "../context/alertContext";
 import MenuOptions from "../context/menuOptions";
 
 const { width } = Dimensions.get("window");
@@ -110,13 +108,9 @@ export default function PlaylistDetails() {
     playNext,
     seekToPosition,
     togglePlaybackMode,
-    playbackMode,
-    autoPlayEnabled,
-    currentSongId,
     isCurrentlyPlayingSong,
   } = useAudio();
 
-  // chuyen doi số thành định dạng dễ đọc
   const formatNumber = (num: number): string => {
     if (!num && num !== 0) return "0";
 
@@ -131,7 +125,7 @@ export default function PlaylistDetails() {
     }
   };
 
-  // lay bai hat theo playlistId 
+  // lay bai hat theo playlistId
   const fetchPlaylistSongs = useCallback(
     async (playlistId: string) => {
       try {
@@ -146,7 +140,6 @@ export default function PlaylistDetails() {
           return;
         }
 
-        // Sử dụng Promise.all để fetch song data song song
         const songPromises = querySnapshot.docs.map(async (playlistSongDoc) => {
           const docData = playlistSongDoc.data();
           if (docData) {
@@ -176,55 +169,12 @@ export default function PlaylistDetails() {
         setSongs(validSongs);
       } catch (err) {
         console.error("Error fetching playlist songs:", err);
-        error("Lỗi", "Không thể tải danh sách bài hát"); 
+        error("Lỗi", "Không thể tải danh sách bài hát");
       }
     },
     [error]
-  ); // Thêm error vào dependencies
+  );
 
-  // lay ds bai hat yeu thich 
-  const fetchFavoriteSongs = useCallback(async () => {
-    if (!likedSongs || likedSongs.size === 0) {
-      setSongs([]);
-      return;
-    }
-
-    try {
-      const favoriteSongsArray: PlaylistSong[] = [];
-
-      // Sử dụng Promise.all để fetch song data song song thay vì tuần tự
-      const songPromises = Array.from(likedSongs).map(async (songId) => {
-        const songDoc = await getDoc(doc(db, "song", songId));
-        if (songDoc.exists()) {
-          return {
-            id: `fav_${songId}`,
-            songId,
-            playlistId: "_favPlaylist",
-            addedAt: new Date(),
-            song: {
-              id: songDoc.id,
-              ...songDoc.data(),
-            } as Song,
-          };
-        }
-        return null;
-      });
-
-      const results = await Promise.all(songPromises);
-
-      // Lọc bỏ các kết quả null
-      const validSongs = results.filter(
-        (song) => song !== null
-      ) as PlaylistSong[];
-
-      setSongs(validSongs);
-    } catch (err) {
-      console.error("Error fetching favorite songs:", err);
-      error("Lỗi", "Không thể tải danh sách bài hát yêu thích"); 
-    }
-  }, [likedSongs, error]); // Thêm error vào dependencies
-
-  // 
   const removeSongFromPlaylist = useCallback(
     async (playlistSongId: string) => {
       try {
@@ -234,7 +184,7 @@ export default function PlaylistDetails() {
           // Sử dụng handleLike để unlike bài hát
           await handleLike(songId);
 
-          success("Thành công", "Đã xóa bài hát khỏi danh sách yêu thích"); 
+          success("Thành công", "Đã xóa bài hát khỏi danh sách yêu thích");
           setSongs((prevSongs) =>
             prevSongs.filter((s) => s.id !== playlistSongId)
           );
@@ -258,14 +208,14 @@ export default function PlaylistDetails() {
         setSongs((prevSongs) =>
           prevSongs.filter((s) => s.id !== playlistSongId)
         );
-        success("Thành công", "Đã xóa bài hát khỏi playlist"); 
+        success("Thành công", "Đã xóa bài hát khỏi playlist");
       } catch (err) {
         console.error("Error removing song from playlist:", err);
-        error("Lỗi", "Không thể xóa bài hát khỏi playlist"); 
+        error("Lỗi", "Không thể xóa bài hát khỏi playlist");
       }
     },
     [id, handleLike, success, error]
-  ); // Thêm success, error vào dependencies
+  );
 
   // mo menu options
   const openMenuOptions = useCallback((song: Song) => {
@@ -373,18 +323,14 @@ export default function PlaylistDetails() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      if (id === "_favPlaylist") {
-        await fetchFavoriteSongs();
-      } else {
-        await fetchPlaylistSongs(id as string);
-      }
+      await fetchPlaylistSongs(id as string);
     } catch (err) {
       console.error("Error refreshing:", err);
       error("Lỗi", "Không thể làm mới danh sách. Vui lòng thử lại.");
     } finally {
       setRefreshing(false);
     }
-  }, [id, fetchFavoriteSongs, fetchPlaylistSongs, error]);
+  }, [id, fetchPlaylistSongs, error]);
 
   // focus effect de lay chi tiet playlist
   useFocusEffect(
@@ -392,20 +338,6 @@ export default function PlaylistDetails() {
       const fetchPlaylistDetails = async () => {
         try {
           setLoading(true);
-
-          if (id === "_favPlaylist") {
-            setPlaylist({
-              id: "_favPlaylist",
-              name: "Bài hát yêu thích",
-              description: "Những bài hát bạn đã thích",
-              coverImg: "https://example.com/favorites-cover.jpg",
-              userId: "",
-              createdAt: null,
-              updatedAt: null,
-            });
-            await fetchFavoriteSongs();
-            return;
-          }
 
           const playlistDoc = await getDoc(doc(db, "playlists", id as string));
 
@@ -444,7 +376,7 @@ export default function PlaylistDetails() {
     <TouchableOpacity
       style={[
         styles.songItem,
-        item.song && isCurrentlyPlayingSong(item.song.id) && styles.playingItem, 
+        item.song && isCurrentlyPlayingSong(item.song.id) && styles.playingItem,
       ]}
       onPress={() => {
         if (item.song) {
@@ -545,7 +477,6 @@ export default function PlaylistDetails() {
     </TouchableOpacity>
   );
 
-  // neu dang loading => hien thi loading spinner
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -685,7 +616,6 @@ export default function PlaylistDetails() {
           duration={duration}
           currentPosition={currentPosition}
           isRepeat={isRepeat}
-          playbackMode={playbackMode}
           onClose={() => setShowPlayer(false)}
           onPlayPause={pauseOrResume}
           onNext={playNext}

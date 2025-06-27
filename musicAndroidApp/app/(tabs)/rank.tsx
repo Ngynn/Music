@@ -8,13 +8,13 @@ import {
   Image,
   ActivityIndicator,
   Dimensions,
-  SafeAreaView, // Thêm SafeAreaView
-  StatusBar, // Thêm StatusBar
-  Platform, // Thêm Platform
+  SafeAreaView,
+  StatusBar,
+  Platform,
 } from "react-native";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
-import { useAudio } from "../context/audioContext"; // Đổi từ useAudioPlayer thành useAudio
+import { useAudio } from "../context/audioContext";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import ModalPlayer from "../components/modalPlayer";
 import MiniPlayer from "../components/miniPlayer";
@@ -23,7 +23,6 @@ import { useFocusEffect } from "@react-navigation/native";
 
 const { width } = Dimensions.get("window");
 
-// Thêm interface ở đầu file
 interface Song {
   id: string;
   name: string;
@@ -43,7 +42,6 @@ export default function Rank() {
   const [refreshing, setRefreshing] = useState(false);
   const [miniPlayerHeight, setMiniPlayerHeight] = useState(0);
 
-  // Cập nhật import từ context và thêm currentSongId, isCurrentlyPlayingSong
   const {
     playSound,
     pauseOrResume,
@@ -65,12 +63,9 @@ export default function Rank() {
     setCurrentSongList,
     playbackMode,
     togglePlaybackMode,
-    autoPlayEnabled,
-    currentSongId, // Thêm mới
-    isCurrentlyPlayingSong, // Thêm mới
+    isCurrentlyPlayingSong,
   } = useAudio();
 
-  // Format number function giữ nguyên
   const formatNumber = (num: number): string => {
     if (!num && num !== 0) return "0";
 
@@ -85,17 +80,10 @@ export default function Rank() {
     }
   };
 
-  // useEffect(() => {
-  //   fetchRankings();
-  // }, []);
-
-  // chỉnh sửa useFocusEffect để gọi fetchRankings
   useFocusEffect(
     React.useCallback(() => {
       fetchRankings();
-      return () => {
-        // Cleanup nếu cần
-      };
+      return () => {};
     }, [])
   );
 
@@ -103,7 +91,7 @@ export default function Rank() {
   const fetchRankings = async () => {
     setLoading(true);
     try {
-      // Lấy bài hát theo lượt thích 
+      // Lấy bài hát theo lượt thích
       const likeQuery = query(
         collection(db, "song"),
         orderBy("likes", "desc"),
@@ -125,7 +113,6 @@ export default function Rank() {
         .filter((song) => song.likes && song.likes > 0) // Chỉ lấy những bài hát có lượt thích > 0
         .slice(0, 10); // Chỉ lấy 10 bài đầu tiên
 
-      // console.log("Songs by likes:", likeData); // Debug để kiểm tra dữ liệu
       setSongsByLikes(likeData);
 
       // Lấy bài hát theo lượt nghe
@@ -151,7 +138,6 @@ export default function Rank() {
         .filter((song) => song.views && song.views > 0)
         .slice(0, 10);
 
-      // console.log("Songs by views:", viewData); // Debug để kiểm tra dữ liệu
       setSongsByViews(viewData);
     } catch (error) {
       console.error("Lỗi khi tải bảng xếp hạng:", error);
@@ -180,7 +166,7 @@ export default function Rank() {
       );
     }
 
-    // ko co bai hat => thong bao 
+    // ko co bai hat => thong bao
     if (songs.length === 0) {
       return (
         <View style={styles.emptyContainer}>
@@ -333,7 +319,6 @@ export default function Rank() {
           duration={duration}
           currentPosition={currentPosition}
           isRepeat={isRepeat}
-          playbackMode={playbackMode}
           onClose={() => setShowPlayer(false)}
           onPlayPause={pauseOrResume}
           onNext={playNext}

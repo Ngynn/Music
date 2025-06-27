@@ -6,7 +6,6 @@ import { View, Platform, StatusBar } from "react-native";
 import { COLORS, SIZES } from "../constants/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// Define valid FontAwesome icon names
 type FontAwesomeIconNames =
   | "home"
   | "search"
@@ -18,7 +17,6 @@ type FontAwesomeIconNames =
   | "list"
   | "gear";
 
-// Define valid MaterialIcons icon names
 type MaterialIconNames =
   | "home"
   | "search"
@@ -32,11 +30,9 @@ type MaterialIconNames =
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
 
-  // Đảm bảo tab bar nằm trên thanh cử chỉ
   const getTabBarHeight = () => {
-    // Tăng height lên rõ rệt cho Android
     if (Platform.OS === "android") {
-      return 60 + insets.bottom; // Tăng thêm để đảm bảo không bị che
+      return 60 + insets.bottom;
     }
     return 60 + insets.bottom;
   };
@@ -51,7 +47,6 @@ export default function TabLayout() {
           borderTopWidth: 0,
           elevation: 8,
           height: getTabBarHeight(),
-          // Đảm bảo nội dung tab không bị che
           paddingBottom:
             Platform.OS === "android" ? insets.bottom + 10 : insets.bottom,
           paddingTop: 5,
@@ -59,13 +54,10 @@ export default function TabLayout() {
           zIndex: 8,
           position: "relative",
         },
-        // Điều chỉnh vị trí của label
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: "500",
-          // marginBottom: Platform.OS === "android" ? insets.bottom + 8 : 5,
         },
-        // Điều chỉnh vị trí của icon
         tabBarIconStyle: {
           marginTop: 3,
           marginBottom: Platform.OS === "android" ? 2 : 0,

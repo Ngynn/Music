@@ -9,15 +9,14 @@ import {
   Image,
   Modal,
   Dimensions,
-  SafeAreaView, // Thêm SafeAreaView
-  StatusBar, // Thêm StatusBar
-  Platform, // Thêm Platform
+  SafeAreaView,
+  StatusBar,
+  Platform,
 } from "react-native";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 import { useAudio } from "../context/audioContext";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import Slider from "@react-native-community/slider";
 import ModalPlayer from "../components/modalPlayer";
 import MiniPlayer from "../components/miniPlayer";
 import { COLORS, SIZES } from "../constants/theme";
@@ -47,12 +46,9 @@ export default function Search() {
     playNext,
     seekToPosition,
     togglePlaybackMode,
-    playbackMode,
-    autoPlayEnabled,
     handleLike,
     isLiked,
-    setCurrentlyPlaying,
-    currentSongId,
+
     isCurrentlyPlayingSong,
   } = useAudio();
 
@@ -86,8 +82,8 @@ export default function Search() {
 
     setSearchResults(filteredSongs);
 
-    // Neu co ket qua tim kiem => cap nhat danh sach bai hat 
-    if (filteredSongs.length > 0) { 
+    // Neu co ket qua tim kiem => cap nhat danh sach bai hat
+    if (filteredSongs.length > 0) {
       setCurrentSongList(filteredSongs);
     }
   };
@@ -197,7 +193,6 @@ export default function Search() {
           duration={duration}
           currentPosition={currentPosition}
           isRepeat={isRepeat}
-          playbackMode={playbackMode}
           onClose={() => setShowPlayer(false)}
           onPlayPause={pauseOrResume}
           onNext={playNext}

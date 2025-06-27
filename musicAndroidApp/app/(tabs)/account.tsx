@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
-  // Alert,  // Xóa import này
   ScrollView,
   SafeAreaView,
   StatusBar,
@@ -26,7 +25,7 @@ import {
   updatePassword,
 } from "firebase/auth";
 import { useFocusEffect } from "@react-navigation/native";
-import { useAlert } from "../context/alertContext"; // Thêm import useAlert
+import { useAlert } from "../context/alertContext";
 
 interface UserData {
   createdAt?: any;
@@ -38,7 +37,6 @@ interface UserData {
 }
 
 export default function Account() {
-  // Thêm các phương thức từ useAlert
   const { success, error, confirm } = useAlert();
 
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -75,7 +73,6 @@ export default function Account() {
     );
   };
 
-
   // xem thong tin tai khoan
   const handleViewProfile = () => {
     if (!userData) {
@@ -89,8 +86,7 @@ export default function Account() {
     );
   };
 
-
-  // lay thong tin user 
+  // lay thong tin user
   const fetchUserData = async () => {
     if (!auth.currentUser) return;
 
@@ -112,7 +108,6 @@ export default function Account() {
     }
   };
 
-
   // kich hoat modal doi mat khau
   const handleChangePassword = () => {
     if (!auth.currentUser || !auth.currentUser.email) {
@@ -123,7 +118,7 @@ export default function Account() {
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
-    setPasswordModalVisible(true); // modal day ne
+    setPasswordModalVisible(true);
   };
 
   // đổi mật khẩu
@@ -541,7 +536,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#fff",
   },
-  // Style cho modal
+
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
@@ -624,7 +619,7 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.7,
   },
-  // Style cho About Me
+
   aboutContainer: {
     width: "100%",
     alignItems: "center",

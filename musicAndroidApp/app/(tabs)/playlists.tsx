@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -53,8 +53,7 @@ interface Playlist {
 }
 
 export default function Playlists() {
-  // Thêm hook useAlert
-  const { confirm, prompt, success, error } = useAlert();
+  const { confirm, success, error } = useAlert();
 
   const [userPlaylists, setUserPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,11 +63,7 @@ export default function Playlists() {
   const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
   const [selectedCoverImg, setSelectedCoverImg] = useState<string | null>(null);
   const [miniPlayerHeight, setMiniPlayerHeight] = useState(0);
-
-  // Thêm state mới để quản lý trạng thái loading trong modal
   const [isProcessing, setIsProcessing] = useState(false);
-
-  // Thêm state mới để hiển thị menu tùy chọn
   const [showPlaylistOptions, setShowPlaylistOptions] = useState<string | null>(
     null
   );
@@ -79,10 +74,8 @@ export default function Playlists() {
   const auth = getAuth();
   const user = auth.currentUser;
 
-  // Cập nhật import từ context và thêm currentSongId, isCurrentlyPlayingSong
   const {
     likedSongs,
-    playSound,
     currentSong,
     currentlyPlaying,
     isPlaying,
@@ -99,15 +92,9 @@ export default function Playlists() {
     playNext,
     seekToPosition,
     togglePlaybackMode,
-    playbackMode,
-    autoPlayEnabled,
-    setCurrentSongList,
-    currentSongId, // Thêm mới
-    isCurrentlyPlayingSong, // Thêm mới
   } = useAudio();
 
-  // Hàm tải ảnh lên Cloudinary
-  const uploadToCloudinary = async (imageUri: string) => {
+  const uploadToCloudinary = useCallback(async (imageUri: string) => {
     try {
       const formData = new FormData();
 
@@ -137,10 +124,9 @@ export default function Playlists() {
       console.error("Lỗi khi tải ảnh lên Cloudinary:", error);
       throw error;
     }
-  };
+  }, []);
 
-  // lay ds playlist cua user
-  const fetchUserPlaylists = async () => {
+  const fetchUserPlaylists = useCallback(async () => {
     if (!user) {
       setLoading(false);
       return;
@@ -167,35 +153,25 @@ export default function Playlists() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.uid]);
 
-  // useEffect(() => {
-  //   fetchUserPlaylists();
-  // }, [user]);
-
-  // Thay thế useEffect fetch data bằng useFocusEffect
   useFocusEffect(
-    React.useCallback(() => {
-      // Fetch data mỗi khi tab được focus
+    useCallback(() => {
       fetchUserPlaylists();
-    }, [])
+    }, [fetchUserPlaylists])
   );
 
-  // tao playlist
-  const createPlaylist = async () => {
+  const createPlaylist = useCallback(async () => {
     if (!user) {
-      // Thay Alert.alert bằng error
       error("Lỗi", "Bạn cần đăng nhập để tạo playlist");
       return;
     }
 
     if (!newPlaylistName.trim()) {
-      // Thay Alert.alert bằng error
       error("Lỗi", "Vui lòng nhập tên playlist");
       return;
     }
 
-    // Phần còn lại giữ nguyên
     setIsProcessing(true);
     try {
       let coverImgUrl = selectedCoverImg;
@@ -215,8 +191,8 @@ export default function Playlists() {
 
       const docRef = await addDoc(collection(db, "playlists"), newPlaylist);
 
-      setUserPlaylists([
-        ...userPlaylists,
+      setUserPlaylists((prev) => [
+        ...prev,
         {
           id: docRef.id,
           ...newPlaylist,
@@ -234,63 +210,64 @@ export default function Playlists() {
         pathname: "/playlist/[id]",
         params: { id: docRef.id },
       });
-      // Thêm thông báo thành công
       success("Thành công", "Playlist đã được tạo");
     } catch (err) {
       console.error("Lỗi khi tạo playlist:", err);
-      // Thay Alert.alert bằng error
       error("Lỗi", "Không thể tạo playlist. Vui lòng thử lại sau.");
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [
+    user,
+    newPlaylistName,
+    newPlaylistDesc,
+    selectedCoverImg,
+    uploadToCloudinary,
+    success,
+    error,
+  ]);
 
-  // xoa playlist
-  const deletePlaylist = async (playlistId: string) => {
-    // Thay Alert.alert bằng confirm
-    confirm(
-      "Xác nhận xóa",
-      "Bạn có chắc chắn muốn xóa playlist này?",
-      async () => {
-        try {
-          await deleteDoc(doc(db, "playlists", playlistId));
+  const deletePlaylist = useCallback(
+    async (playlistId: string) => {
+      confirm(
+        "Xác nhận xóa",
+        "Bạn có chắc chắn muốn xóa playlist này?",
+        async () => {
+          try {
+            await deleteDoc(doc(db, "playlists", playlistId));
 
-          // lay ds bai hat trong playlist theo playlistId
-          const songsQuery = query(
-            collection(db, "playlistSongs"),
-            where("playlistId", "==", playlistId)
-          );
-          
-          // lay thong tin bai hat trong playlist
-          const songsSnapshot = await getDocs(songsQuery);
-          const deletePromises: Promise<void>[] = [];
+            const songsQuery = query(
+              collection(db, "playlistSongs"),
+              where("playlistId", "==", playlistId)
+            );
 
-          // tao promise xoa tung bai hat trong playlist
-          songsSnapshot.forEach((doc) => {
-            deletePromises.push(deleteDoc(doc.ref));
-          });
+            const songsSnapshot = await getDocs(songsQuery);
+            const deletePromises: Promise<void>[] = [];
 
-          //execute 
-          await Promise.all(deletePromises);
+            songsSnapshot.forEach((doc) => {
+              deletePromises.push(deleteDoc(doc.ref));
+            });
 
-          setUserPlaylists(userPlaylists.filter((p) => p.id !== playlistId));
-          success("Thành công", "Đã xóa playlist");
-        } catch (err) {
-          console.error("Lỗi khi xóa playlist:", err);
-          error("Lỗi", "Không thể xóa playlist. Vui lòng thử lại sau.");
+            await Promise.all(deletePromises);
+
+            setUserPlaylists((prev) => prev.filter((p) => p.id !== playlistId));
+            success("Thành công", "Đã xóa playlist");
+          } catch (err) {
+            console.error("Lỗi khi xóa playlist:", err);
+            error("Lỗi", "Không thể xóa playlist. Vui lòng thử lại sau.");
+          }
         }
-      }
-    );
-  };
+      );
+    },
+    [confirm, success, error]
+  );
 
-  // sua playlist
-  const updatePlaylist = async () => {
+  const updatePlaylist = useCallback(async () => {
     if (!editingPlaylist || !newPlaylistName.trim()) {
       error("Lỗi", "Vui lòng nhập tên playlist");
       return;
     }
 
-    // Bắt đầu xử lý - set isProcessing thành true
     setIsProcessing(true);
 
     try {
@@ -300,7 +277,6 @@ export default function Playlists() {
         coverImgUrl = await uploadToCloudinary(selectedCoverImg);
       }
 
-      // cap nhat playlist trong firestore
       const playlistRef = doc(db, "playlists", editingPlaylist.id);
       await updateDoc(playlistRef, {
         name: newPlaylistName.trim(),
@@ -309,9 +285,8 @@ export default function Playlists() {
         updatedAt: serverTimestamp(),
       });
 
-      // refresh de hien thi info moi
-      setUserPlaylists(
-        userPlaylists.map((p) =>
+      setUserPlaylists((prev) =>
+        prev.map((p) =>
           p.id === editingPlaylist.id
             ? {
                 ...p,
@@ -329,7 +304,6 @@ export default function Playlists() {
       setNewPlaylistName("");
       setNewPlaylistDesc("");
       setSelectedCoverImg(null);
-      // Thêm thông báo thành công
       success("Thành công", "Playlist đã được cập nhật");
     } catch (err) {
       console.error("Lỗi khi cập nhật playlist:", err);
@@ -337,19 +311,25 @@ export default function Playlists() {
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [
+    editingPlaylist,
+    newPlaylistName,
+    newPlaylistDesc,
+    selectedCoverImg,
+    uploadToCloudinary,
+    success,
+    error,
+  ]);
 
-  // xu ly khi user nhan nut sua playlist
-  const handleEditPlaylist = (playlist: Playlist) => {
+  const handleEditPlaylist = useCallback((playlist: Playlist) => {
     setEditingPlaylist(playlist);
     setNewPlaylistName(playlist.name);
     setNewPlaylistDesc(playlist.description || "");
     setSelectedCoverImg(playlist.coverImg);
     setModalVisible(true);
-  };
+  }, []);
 
-  // xu ly khi user chon anh bia playlist
-  const handleSelectCoverImage = async () => {
+  const handleSelectCoverImage = useCallback(async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -360,52 +340,278 @@ export default function Playlists() {
     if (!result.canceled) {
       setSelectedCoverImg(result.assets[0].uri);
     }
-  };
+  }, []);
 
-  // Thêm hàm hiển thị menu tùy chọn cho playlist
-  const showPlaylistMenu = (playlist: Playlist) => {
-    setSelectedPlaylist(playlist);
+  const showPlaylistMenu = useCallback(
+    (playlist: Playlist) => {
+      setSelectedPlaylist(playlist);
 
-    if (Platform.OS === "ios") {
-      const options = ["Hủy", "Chỉnh sửa playlist", "Xóa playlist"];
-      const cancelButtonIndex = 0;
-      const destructiveButtonIndex = 2;
+      if (Platform.OS === "ios") {
+        const options = ["Hủy", "Chỉnh sửa playlist", "Xóa playlist"];
+        const cancelButtonIndex = 0;
+        const destructiveButtonIndex = 2;
 
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options,
-          cancelButtonIndex,
-          destructiveButtonIndex,
-        },
-        (buttonIndex) => {
-          if (buttonIndex === 1) {
-            handleEditPlaylist(playlist);
-          } else if (buttonIndex === 2) {
-            deletePlaylist(playlist.id);
+        ActionSheetIOS.showActionSheetWithOptions(
+          {
+            options,
+            cancelButtonIndex,
+            destructiveButtonIndex,
+          },
+          (buttonIndex) => {
+            if (buttonIndex === 1) {
+              handleEditPlaylist(playlist);
+            } else if (buttonIndex === 2) {
+              deletePlaylist(playlist.id);
+            }
           }
-        }
-      );
-    } else {
-      // Cho Android, sử dụng Modal
-      setShowPlaylistOptions(playlist.id);
-    }
-  };
+        );
+      } else {
+        setShowPlaylistOptions(playlist.id);
+      }
+    },
+    [handleEditPlaylist, deletePlaylist]
+  );
 
-  // Thêm hàm render modal options cho Android
-  const renderOptionsModal = () => {
+  const handleFavoritePress = useCallback(() => {
+    console.log("TouchableOpacity pressed!");
+    console.log("likedSongs size:", likedSongs?.size);
+    try {
+      router.push("/favoritePlaylist/_favPlaylist");
+      console.log("Router push called successfully");
+    } catch (error) {
+      console.error("Router push error:", error);
+    }
+  }, [likedSongs?.size]);
+
+  const handleCreatePlaylistPress = useCallback(() => {
+    setEditingPlaylist(null);
+    setNewPlaylistName("");
+    setNewPlaylistDesc("");
+    setSelectedCoverImg(null);
+    setModalVisible(true);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    if (!isProcessing) {
+      setModalVisible(false);
+      setEditingPlaylist(null);
+      setNewPlaylistName("");
+      setNewPlaylistDesc("");
+      setSelectedCoverImg(null);
+    }
+  }, [isProcessing]);
+
+  const ListHeaderComponent = useMemo(
+    () => (
+      <>
+        <TouchableOpacity
+          style={[styles.favoriteCard, { zIndex: 999, elevation: 10 }]}
+          onPress={handleFavoritePress}
+          activeOpacity={0.7}
+        >
+          <View style={styles.favoriteIconContainer}>
+            <Icon name="favorite" size={36} color={COLORS.error} />
+          </View>
+          <View style={styles.favoriteDetails}>
+            <Text style={styles.favoriteTitle}>Bài hát yêu thích</Text>
+            <Text style={styles.favoriteSubtitle}>
+              {likedSongs?.size || 0} bài hát
+            </Text>
+          </View>
+          <Icon name="chevron-right" size={26} color={COLORS.textSecondary} />
+        </TouchableOpacity>
+
+        <Text style={styles.sectionTitle}>Playlist của bạn</Text>
+
+        {userPlaylists.length === 0 && (
+          <View style={styles.emptyContainer}>
+            <Icon name="queue-music" size={60} color={COLORS.textSecondary} />
+            <Text style={styles.emptyText}>
+              Bạn chưa có playlist nào. Tạo playlist đầu tiên ngay!
+            </Text>
+            <TouchableOpacity
+              style={styles.emptyCreateButton}
+              onPress={handleCreatePlaylistPress}
+            >
+              <Text style={styles.emptyCreateButtonText}>Tạo playlist</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </>
+    ),
+    [
+      likedSongs?.size,
+      userPlaylists.length,
+      handleFavoritePress,
+      handleCreatePlaylistPress,
+    ]
+  );
+
+  // **FIX 12: Memoize renderItem**
+  const renderItem = useCallback(
+    ({ item }: { item: Playlist }) => (
+      <TouchableOpacity
+        style={styles.playlistItem}
+        onPress={() =>
+          router.push({
+            pathname: "/playlist/[id]",
+            params: { id: item.id },
+          })
+        }
+      >
+        <Image source={{ uri: item.coverImg }} style={styles.playlistCover} />
+        <View style={styles.playlistDetails}>
+          <Text style={styles.playlistName}>{item.name}</Text>
+          {item.description && (
+            <Text style={styles.playlistDescription} numberOfLines={1}>
+              {item.description}
+            </Text>
+          )}
+        </View>
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={(e) => {
+            e.stopPropagation();
+            showPlaylistMenu(item);
+          }}
+        >
+          <Icon name="more-vert" size={24} color={COLORS.textSecondary} />
+        </TouchableOpacity>
+      </TouchableOpacity>
+    ),
+    [showPlaylistMenu]
+  );
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>Playlist của tôi</Text>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
+  function renderModal() {
+    return (
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCloseModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {editingPlaylist ? "Chỉnh sửa Playlist" : "Tạo Playlist"}
+              </Text>
+              <TouchableOpacity
+                style={styles.closeModalButton}
+                onPress={handleCloseModal}
+                disabled={isProcessing}
+              >
+                <Icon name="close" size={24} color={COLORS.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.coverImageContainer}>
+              <Image
+                source={{
+                  uri: selectedCoverImg || "https://via.placeholder.com/150",
+                }}
+                style={styles.coverImage}
+              />
+              <TouchableOpacity
+                style={styles.editCoverButton}
+                onPress={handleSelectCoverImage}
+                disabled={isProcessing}
+              >
+                <Icon name="edit" size={20} color={COLORS.white} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.formContainer}>
+              <View style={styles.inputWrapper}>
+                <Text style={styles.inputLabel}>Tên Playlist</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Nhập tên playlist"
+                  value={newPlaylistName}
+                  onChangeText={setNewPlaylistName}
+                  editable={!isProcessing}
+                  maxLength={50}
+                />
+                <Text style={styles.charCount}>
+                  {newPlaylistName.length}/50
+                </Text>
+              </View>
+              <View style={styles.inputWrapper}>
+                <Text style={styles.inputLabel}>Mô tả (tuỳ chọn)</Text>
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  placeholder="Nhập mô tả cho playlist"
+                  value={newPlaylistDesc}
+                  onChangeText={setNewPlaylistDesc}
+                  editable={!isProcessing}
+                  multiline
+                  maxLength={200}
+                />
+                <Text style={styles.charCount}>
+                  {newPlaylistDesc.length}/200
+                </Text>
+              </View>
+            </View>
+            <View style={styles.modalButtonRow}>
+              <TouchableOpacity
+                style={[
+                  styles.cancelButton,
+                  isProcessing && styles.disabledButton,
+                ]}
+                onPress={handleCloseModal}
+                disabled={isProcessing}
+              >
+                <Text style={styles.cancelButtonText}>Huỷ</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.confirmButton,
+                  isProcessing && styles.disabledButton,
+                ]}
+                onPress={editingPlaylist ? updatePlaylist : createPlaylist}
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <View style={styles.loadingButtonContent}>
+                    <ActivityIndicator size="small" color={COLORS.white} />
+                    <Text style={styles.confirmButtonText}>
+                      {editingPlaylist ? "Đang lưu..." : "Đang tạo..."}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={styles.confirmButtonText}>
+                    {editingPlaylist ? "Lưu thay đổi" : "Tạo Playlist"}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  }
+
+  function renderOptionsModal() {
     if (!showPlaylistOptions || !selectedPlaylist) return null;
 
     return (
       <Modal
-        transparent={true}
         visible={!!showPlaylistOptions}
+        transparent
+        animationType="slide"
         onRequestClose={() => setShowPlaylistOptions(null)}
-        animationType="fade"
       >
         <TouchableOpacity
           style={styles.optionsModalOverlay}
           activeOpacity={1}
-          onPress={() => setShowPlaylistOptions(null)}
+          onPressOut={() => setShowPlaylistOptions(null)}
         >
           <View style={styles.optionsContainer}>
             <View style={styles.playlistInfoInModal}>
@@ -417,17 +623,16 @@ export default function Playlists() {
                 <Text style={styles.modalPlaylistName}>
                   {selectedPlaylist.name}
                 </Text>
-                {selectedPlaylist.description && (
+                {selectedPlaylist.description ? (
                   <Text
                     style={styles.modalPlaylistDescription}
-                    numberOfLines={1}
+                    numberOfLines={2}
                   >
                     {selectedPlaylist.description}
                   </Text>
-                )}
+                ) : null}
               </View>
             </View>
-
             <TouchableOpacity
               style={styles.optionItem}
               onPress={() => {
@@ -435,10 +640,9 @@ export default function Playlists() {
                 handleEditPlaylist(selectedPlaylist);
               }}
             >
-              <Icon name="edit" size={24} color={COLORS.text} />
+              <Icon name="edit" size={24} color={COLORS.primary} />
               <Text style={styles.optionText}>Chỉnh sửa playlist</Text>
             </TouchableOpacity>
-
             <TouchableOpacity
               style={styles.optionItem}
               onPress={() => {
@@ -446,17 +650,8 @@ export default function Playlists() {
                 deletePlaylist(selectedPlaylist.id);
               }}
             >
-              <Icon
-                name="delete-outline"
-                size={24}
-                color={COLORS.error || "#f44336"}
-              />
-              <Text
-                style={{
-                  ...styles.optionText,
-                  color: COLORS.error || "#f44336",
-                }}
-              >
+              <Icon name="delete" size={24} color={COLORS.error} />
+              <Text style={[styles.optionText, { color: COLORS.error }]}>
                 Xóa playlist
               </Text>
             </TouchableOpacity>
@@ -464,173 +659,8 @@ export default function Playlists() {
         </TouchableOpacity>
       </Modal>
     );
-  };
-
-  // render modal 
-  const renderModal = () => (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={modalVisible}
-      onRequestClose={() => {
-        // Chỉ cho phép đóng modal khi không trong trạng thái xử lý
-        if (!isProcessing) {
-          setModalVisible(false);
-          setEditingPlaylist(null);
-          setNewPlaylistName("");
-          setNewPlaylistDesc("");
-          setSelectedCoverImg(null);
-        }
-      }}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          {/* Header với nút đóng */}
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>
-              {editingPlaylist ? "Chỉnh sửa Playlist" : "Tạo Playlist Mới"}
-            </Text>
-            <TouchableOpacity
-              style={styles.closeModalButton}
-              onPress={() => {
-                if (!isProcessing) {
-                  setModalVisible(false);
-                  setEditingPlaylist(null);
-                  setNewPlaylistName("");
-                  setNewPlaylistDesc("");
-                  setSelectedCoverImg(null);
-                }
-              }}
-              disabled={isProcessing}
-            >
-              <Icon name="close" size={24} color={COLORS.textSecondary} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Ảnh bìa playlist */}
-          <TouchableOpacity
-            style={styles.coverImageContainer}
-            onPress={handleSelectCoverImage}
-            disabled={isProcessing}
-          >
-            <Image
-              source={{
-                uri:
-                  selectedCoverImg ||
-                  "https://images.rawpixel.com/image_png_800/cHJpdmF0ZS9zci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA5L3JtNTgxLWVsZW1lbnQtMTA3LnBuZw.png",
-              }}
-              style={styles.coverImage}
-              resizeMode="cover"
-            />
-            <View style={styles.editCoverButton}>
-              <Icon name="photo-camera" size={20} color={COLORS.white} />
-            </View>
-          </TouchableOpacity>
-
-          {/* Form input */}
-          <View style={styles.formContainer}>
-            <View style={styles.inputWrapper}>
-              <Text style={styles.inputLabel}>Tên Playlist</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Nhập tên playlist"
-                placeholderTextColor={COLORS.textSecondary}
-                value={newPlaylistName}
-                onChangeText={setNewPlaylistName}
-                editable={!isProcessing}
-                maxLength={30}
-              />
-            </View>
-
-            <View style={styles.inputWrapper}>
-              <Text style={styles.inputLabel}>Mô tả (Tùy chọn)</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Thêm mô tả về playlist này..."
-                placeholderTextColor={COLORS.textSecondary}
-                value={newPlaylistDesc}
-                onChangeText={setNewPlaylistDesc}
-                multiline
-                editable={!isProcessing}
-                maxLength={200}
-              />
-              <Text style={styles.charCount}>{newPlaylistDesc.length}/200</Text>
-            </View>
-          </View>
-
-          {/* Nút hành động */}
-          <View style={styles.modalButtonRow}>
-            <TouchableOpacity
-              style={[
-                styles.actionButton,
-                styles.cancelButton,
-                isProcessing && styles.disabledButton,
-              ]}
-              onPress={() => {
-                setModalVisible(false);
-                setEditingPlaylist(null);
-                setNewPlaylistName("");
-                setNewPlaylistDesc("");
-                setSelectedCoverImg(null);
-              }}
-              disabled={isProcessing}
-            >
-              <Text style={styles.cancelButtonText}>Hủy</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.actionButton,
-                styles.confirmButton,
-                (!newPlaylistName.trim() || isProcessing) &&
-                  styles.disabledButton,
-              ]}
-              onPress={editingPlaylist ? updatePlaylist : createPlaylist}
-              disabled={!newPlaylistName.trim() || isProcessing}
-            >
-              {isProcessing ? (
-                <View style={styles.loadingButtonContent}>
-                  <ActivityIndicator size="small" color={COLORS.white} />
-                  <Text style={styles.confirmButtonText}>
-                    {editingPlaylist ? "Đang cập nhật..." : "Đang tạo..."}
-                  </Text>
-                </View>
-              ) : (
-                <Text style={styles.confirmButtonText}>
-                  {editingPlaylist ? "Cập nhật" : "Tạo mới"}
-                </Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-
-  // if (!user) {
-  //   return (
-  //     <View style={styles.container}>
-  //       <Text style={styles.title}>Playlist của tôi</Text>
-  //       <View style={styles.loginMessage}>
-  //         <Icon name="account-circle" size={60} color={COLORS.textSecondary} />
-  //         <Text style={styles.loginText}>
-  //           Vui lòng đăng nhập để xem và quản lý playlist
-  //         </Text>
-  //       </View>
-  //     </View>
-  //   );
-  // }
-
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Playlist của tôi</Text>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    );
   }
 
-  // Cập nhật phần return JSX với UI được tối ưu
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar
@@ -639,134 +669,40 @@ export default function Playlists() {
         translucent={true}
       />
       <View style={styles.container}>
-        {/* Header gọn gàng hơn */}
         <View style={styles.header}>
           <Text style={styles.title}>Playlist của tôi</Text>
         </View>
 
-        {/* Danh sách các section */}
         <FlatList
-          data={[...userPlaylists]}
+          data={userPlaylists}
           keyExtractor={(item) => item.id}
-          ListHeaderComponent={() => (
-            <>
-              {/* Thẻ yêu thích được thiết kế lại */}
-              <TouchableOpacity
-                style={styles.favoriteCard}
-                onPress={() => router.push("/favoritePlaylist/_favPlaylist")}
-              >
-                <View style={styles.favoriteIconContainer}>
-                  <Icon name="favorite" size={36} color={COLORS.error} />
-                </View>
-                <View style={styles.favoriteDetails}>
-                  <Text style={styles.favoriteTitle}>Bài hát yêu thích</Text>
-                  <Text style={styles.favoriteSubtitle}>
-                    {likedSongs?.size || 0} bài hát
-                  </Text>
-                </View>
-                <Icon
-                  name="chevron-right"
-                  size={26}
-                  color={COLORS.textSecondary}
-                />
-              </TouchableOpacity>
-
-              {/* Section title */}
-              <Text style={styles.sectionTitle}>Playlist của bạn</Text>
-
-              {/* Hiển thị trạng thái rỗng nếu không có playlist */}
-              {userPlaylists.length === 0 && (
-                <View style={styles.emptyContainer}>
-                  <Icon
-                    name="queue-music"
-                    size={60}
-                    color={COLORS.textSecondary}
-                  />
-                  <Text style={styles.emptyText}>
-                    Bạn chưa có playlist nào. Tạo playlist đầu tiên ngay!
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.emptyCreateButton}
-                    onPress={() => {
-                      setEditingPlaylist(null);
-                      setNewPlaylistName("");
-                      setNewPlaylistDesc("");
-                      setSelectedCoverImg(null);
-                      setModalVisible(true);
-                    }}
-                  >
-                    <Text style={styles.emptyCreateButtonText}>
-                      Tạo playlist
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </>
-          )}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.playlistItem}
-              onPress={() =>
-                router.push({
-                  pathname: "/playlist/[id]",
-                  params: { id: item.id },
-                })
-              }
-            >
-              <Image
-                source={{ uri: item.coverImg }}
-                style={styles.playlistCover}
-              />
-              <View style={styles.playlistDetails}>
-                <Text style={styles.playlistName}>{item.name}</Text>
-                {item.description && (
-                  <Text style={styles.playlistDescription} numberOfLines={1}>
-                    {item.description}
-                  </Text>
-                )}
-              </View>
-              <TouchableOpacity
-                style={styles.menuButton}
-                onPress={(e) => {
-                  e.stopPropagation();
-                  showPlaylistMenu(item);
-                }}
-              >
-                <Icon name="more-vert" size={24} color={COLORS.textSecondary} />
-              </TouchableOpacity>
-            </TouchableOpacity>
-          )}
+          ListHeaderComponent={ListHeaderComponent}
+          renderItem={renderItem}
           contentContainerStyle={{
-            paddingBottom: miniPlayerHeight ? miniPlayerHeight + 80 : 100, // Tăng padding để tránh bị MiniPlayer che
-            gap: 12, // Khoảng cách giữa các item
+            paddingBottom: miniPlayerHeight ? miniPlayerHeight + 80 : 100,
+            gap: 12,
           }}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={null}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={10}
         />
 
-        {/* FAB (Floating Action Button) với vị trí được điều chỉnh */}
         <TouchableOpacity
           style={[
             styles.fab,
             { bottom: miniPlayerHeight ? miniPlayerHeight + 20 : 30 },
           ]}
-          onPress={() => {
-            setEditingPlaylist(null);
-            setNewPlaylistName("");
-            setNewPlaylistDesc("");
-            setSelectedCoverImg(null);
-            setModalVisible(true);
-          }}
+          onPress={handleCreatePlaylistPress}
           activeOpacity={0.8}
         >
           <Icon name="add" size={24} color={COLORS.white} />
         </TouchableOpacity>
 
-        {/* Các modal giữ nguyên */}
         {renderModal()}
         {renderOptionsModal()}
 
-        {/* Player giữ nguyên */}
         <ModalPlayer
           visible={showPlayer}
           currentSong={currentSong}
@@ -774,7 +710,6 @@ export default function Playlists() {
           duration={duration}
           currentPosition={currentPosition}
           isRepeat={isRepeat}
-          playbackMode={playbackMode}
           onClose={() => setShowPlayer(false)}
           onPlayPause={pauseOrResume}
           onNext={playNext}
@@ -835,6 +770,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: SIZES.md,
     marginBottom: SIZES.md,
+    marginTop: SIZES.xl,
   },
   favoriteIconContainer: {
     width: 60,
@@ -1044,14 +980,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: SIZES.md,
   },
-  // actionButton: {
-  //   flex: 1,
-  //   borderRadius: 8,
-  //   padding: 14,
-  //   alignItems: "center",
-  //   justifyContent: "center",
-  //   height: 50,
-  // },
+
   cancelButton: {
     backgroundColor: COLORS.cardBg,
     marginRight: 8,
@@ -1082,7 +1011,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  // Các style khác giữ nguyên
   menuButton: {
     padding: 8,
     borderRadius: 20,
@@ -1162,7 +1090,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   header: {
-    // Thêm style cho header container
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",

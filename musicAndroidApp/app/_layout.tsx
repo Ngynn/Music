@@ -23,17 +23,18 @@ export default function RootLayout() {
     if (user) {
       try {
         const db = getFirestore(); // Lấy Firestore instance
-        const userDocRef = doc(db, "users", user.uid); // Thay thế collection().doc()
-        const userDoc = await getDoc(userDocRef); // Thay thế doc().get()
+        const userDocRef = doc(db, "users", user.uid); // Thay thế doc() bằng doc(db, "users", user.uid)
+        // Lấy dữ liệu người dùng từ Firestore
+        const userDoc = await getDoc(userDocRef); // Lấy document người dùng
         const data = userDoc.data();
         if (data?.role) {
-          setRole(data.role); // 👈 Gán role
+          setRole(data.role);
         } else {
-          setRole("user"); // 👈 fallback
+          setRole("user");
         }
       } catch (error) {
         console.log("Error fetching role:", error);
-        setRole("user"); // fallback
+        setRole("user");
       }
     } else {
       setRole(null);
@@ -48,6 +49,7 @@ export default function RootLayout() {
     return unsubscribe; // Hủy đăng ký listener khi component bị unmount
   }, []);
 
+  // Kiểm tra xem người dùng đã đăng nhập và điều hướng đến trang phù hợp
   useEffect(() => {
     if (initializing || role === null) return;
 

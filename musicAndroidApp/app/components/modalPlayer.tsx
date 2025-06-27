@@ -7,17 +7,14 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  FlatList,
-  ActivityIndicator,
 } from "react-native";
 import Slider from "@react-native-community/slider";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { COLORS } from "../constants/theme";
-import MenuOptions from "../context/menuOptions"; // Import MenuOptions component
+import MenuOptions from "../context/menuOptions";
 
 const { width, height } = Dimensions.get("window");
 
-// Thêm props mới
 interface ModalPlayerProps {
   visible: boolean;
   currentSong: any;
@@ -25,7 +22,6 @@ interface ModalPlayerProps {
   duration: number;
   currentPosition: number;
   isRepeat: boolean;
-  playbackMode: string;
   onClose: () => void;
   onPlayPause: () => void;
   onNext: () => void;
@@ -35,13 +31,6 @@ interface ModalPlayerProps {
   onTogglePlaybackMode: () => void;
   onLike: () => void;
   isLiked: boolean;
-
-  // Các props hiện có
-  userPlaylists?: any[];
-  loadingPlaylists?: boolean;
-  onAddToPlaylist?: (playlistId: string, songId: string) => void;
-  onRemoveFromPlaylist?: (playlistId: string, songId: string) => void;
-  checkSongInPlaylist?: (songId: string, playlistId: string) => boolean;
 }
 
 const ModalPlayer: React.FC<ModalPlayerProps> = ({
@@ -51,14 +40,12 @@ const ModalPlayer: React.FC<ModalPlayerProps> = ({
   duration,
   currentPosition,
   isRepeat,
-  playbackMode,
   onClose,
   onPlayPause,
   onNext,
   onPrevious,
   onSeek,
   onToggleRepeat,
-  onTogglePlaybackMode,
   onLike,
   isLiked,
 }) => {
@@ -74,7 +61,7 @@ const ModalPlayer: React.FC<ModalPlayerProps> = ({
     return `${minutes}:${seconds}`;
   };
 
-  // Format number function (chỉ hiển thị khi không phải admin preview)
+  // Format number function
   const formatNumber = (num: number): string => {
     if (!num && num !== 0) return "0";
 
@@ -93,14 +80,11 @@ const ModalPlayer: React.FC<ModalPlayerProps> = ({
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       {currentSong && (
         <View style={styles.modalContainer}>
-          {/* Header với điều kiện admin preview */}
           <View style={styles.headerContainer}>
-            {/* Nút thu nhỏ */}
             <TouchableOpacity style={styles.minimizeButton} onPress={onClose}>
               <Icon name="expand-more" size={30} color={COLORS.text} />
             </TouchableOpacity>
 
-            {/* Nút More Options - chỉ hiển thị cho user */}
             {
               <TouchableOpacity
                 style={styles.moreOptionsButton}
@@ -124,7 +108,6 @@ const ModalPlayer: React.FC<ModalPlayerProps> = ({
             <Text style={styles.modalSongName}>{currentSong.name}</Text>
             <Text style={styles.modalArtist}>{currentSong.artist}</Text>
 
-            {/* Thống kê - chỉ hiển thị cho user */}
             {
               <View style={styles.statsContainer}>
                 <View style={styles.statItem}>
@@ -161,7 +144,6 @@ const ModalPlayer: React.FC<ModalPlayerProps> = ({
               </TouchableOpacity>
             }
 
-            {/* Nút Repeat - chỉ hiển thị cho user */}
             {
               <TouchableOpacity
                 style={styles.iconButton}
@@ -216,7 +198,6 @@ const ModalPlayer: React.FC<ModalPlayerProps> = ({
             </TouchableOpacity>
           </View>
 
-          {/* MenuOptions - chỉ hiển thị cho user */}
           {currentSong && (
             <MenuOptions
               visible={showMenu}
@@ -298,7 +279,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
-  // Thêm styles mới cho phần thống kê
   statsContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -405,62 +385,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
     zIndex: 10,
-  },
-  adminPreviewBadge: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  adminPreviewText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1,
-  },
-  adminInfoContainer: {
-    alignItems: "center",
-    marginTop: 8,
-    paddingHorizontal: 20,
-  },
-  adminInfoText: {
-    color: COLORS.textSecondary,
-    fontSize: 14,
-    fontStyle: "italic",
-    marginBottom: 8,
-  },
-  adminMetaInfo: {
-    backgroundColor: COLORS.hoverBg,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  adminMetaText: {
-    color: COLORS.text,
-    fontSize: 12,
-    marginVertical: 2,
-  },
-  adminIconButton: {
-    alignItems: "center",
-    paddingHorizontal: 20,
-  },
-  adminIconText: {
-    color: COLORS.textSecondary,
-    fontSize: 10,
-    marginTop: 4,
-    textTransform: "uppercase",
-    fontWeight: "600",
-  },
-  adminPlayPauseButton: {
-    backgroundColor: COLORS.primary + "CC", // Slightly transparent for admin
-    borderWidth: 2,
-    borderColor: COLORS.primary,
   },
 });
 

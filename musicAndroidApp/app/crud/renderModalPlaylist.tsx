@@ -30,16 +30,16 @@ const { width } = Dimensions.get("window");
 interface RenderModalPlaylistProps {
   visible: boolean;
   onClose: () => void;
-  // Tham số tùy chọn cho trường hợp thêm bài hát vào playlist từ menu
   songId?: string;
   songName?: string;
   songArtist?: string;
   songImage?: string;
-  // Tham số để edit playlist nếu cần
   editingPlaylist?: any;
-  // Callback sau khi tạo playlist thành công
   onPlaylistCreated?: (playlistId: string) => void;
 }
+
+// Được dùng với menuOptions.tsx
+// Để hiển thị modal tạo playlist mới hoặc chỉnh sửa playlist hiện có
 
 const RenderModalPlaylist: React.FC<RenderModalPlaylistProps> = ({
   visible,
@@ -53,7 +53,6 @@ const RenderModalPlaylist: React.FC<RenderModalPlaylistProps> = ({
 }) => {
   const router = useRouter();
 
-  // State
   const [isLoading, setIsLoading] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState(
     editingPlaylist?.name || ""
@@ -124,7 +123,6 @@ const RenderModalPlaylist: React.FC<RenderModalPlaylistProps> = ({
     try {
       let coverImgUrl = selectedCoverImg;
 
-      // Nếu selectedCoverImg là URI local và không phải URL cloudinary, upload lên
       if (
         selectedCoverImg &&
         !selectedCoverImg.startsWith("http") &&
@@ -185,14 +183,11 @@ const RenderModalPlaylist: React.FC<RenderModalPlaylistProps> = ({
           });
         }
 
-        // Đóng modal
         onClose();
 
-        // Callback sau khi tạo thành công
         if (onPlaylistCreated) {
           onPlaylistCreated(docRef.id);
         } else {
-          // Điều hướng đến trang playlist mới nếu không có callback
           router.push({
             pathname: "/playlist/[id]",
             params: { id: docRef.id },
@@ -238,7 +233,6 @@ const RenderModalPlaylist: React.FC<RenderModalPlaylistProps> = ({
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
-          {/* Header với nút đóng */}
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>
               {editingPlaylist ? "Chỉnh sửa Playlist" : "Tạo Playlist Mới"}
@@ -303,7 +297,6 @@ const RenderModalPlaylist: React.FC<RenderModalPlaylistProps> = ({
             </View>
           </View>
 
-          {/* Nút hành động */}
           <View style={styles.modalButtonRow}>
             <TouchableOpacity
               style={[

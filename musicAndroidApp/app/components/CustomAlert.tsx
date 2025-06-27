@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { COLORS, SIZES } from "../constants/theme";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import { BlurView } from "expo-blur"; // Thêm vào để tạo hiệu ứng blur
+import { BlurView } from "expo-blur";
 
 const { width } = Dimensions.get("window");
 
@@ -126,15 +126,6 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
                     {option.text}
                   </Text>
                 </View>
-
-                {/* {option.style !== "destructive" &&
-                  option.style !== "cancel" && (
-                    <Icon
-                      name="chevron-right"
-                      size={20}
-                      color={COLORS.textSecondary}
-                    />
-                  )} */}
               </TouchableOpacity>
             ))}
           </ScrollView>
